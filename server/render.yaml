@@ -1,7 +1,8 @@
 services:
   - type: web
     name: a2z-ludo-server
-    env: node
+    runtime: node
+    rootDir: server
     buildCommand: npm install
     startCommand: npm start
     envVars:
