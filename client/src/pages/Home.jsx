@@ -60,10 +60,10 @@ const Home = () => {
           className="relative bg-gradient-to-br from-orange-400 to-orange-600 rounded-3xl p-6 text-center shadow-lg cursor-pointer hover:scale-105 transition-all overflow-hidden"
         >
           <div className="absolute top-2 right-2">
-            <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
+            <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
           </div>
           <div className="mb-3">
-            <img src="/logo.png" alt="Ludo" className="w-20 h-20 mx-auto object-contain" />
+            <img src="/logo.png" alt="Ludo" className="w-28 h-28 mx-auto object-contain" />
           </div>
           <h3 className="text-white font-black text-xl mb-1">LUDO</h3>
           <p className="text-white/90 font-bold text-sm">CLASSIC</p>
@@ -80,7 +80,7 @@ const Home = () => {
           className="relative bg-gradient-to-br from-orange-400 to-orange-600 rounded-3xl p-6 text-center shadow-lg hover:scale-105 transition-all overflow-hidden"
         >
           <div className="absolute top-2 right-2">
-            <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
+            <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
           </div>
           <div className="mb-3">
             <div className="w-20 h-20 mx-auto bg-white rounded-full flex items-center justify-center">

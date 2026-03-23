@@ -123,7 +123,7 @@ const Login = () => {
             transition={{ type: "spring", stiffness: 200 }}
             className="relative mx-auto mb-6 inline-block"
           >
-            <img src="/logo.png" alt="KHELOLUDO" className="w-20 h-20 object-contain" />
+            <img src="/logo.png" alt="KHELOLUDO" className="w-32 h-32 object-contain" />
           </motion.div>
           <h1 className="text-4xl font-black text-gray-800 mb-2">
             KHELOLUDO
