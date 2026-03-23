@@ -27,9 +27,9 @@ const Header = () => {
           </button>
 
           <Link to="/" className="flex items-center gap-2 flex-1 justify-center">
-            <img src="/logo.png" alt="A2Z LUDO" className="w-9 h-9 sm:w-10 sm:h-10 object-contain" />
+            <img src="/logo.png" alt="KHELOLUDO" className="w-9 h-9 sm:w-10 sm:h-10 object-contain" />
             <div className="flex flex-col">
-              <span className="text-white font-black text-base sm:text-lg leading-none">A2Z LUDO</span>
+              <span className="text-white font-black text-base sm:text-lg leading-none">KHELOLUDO</span>
               <span className="text-yellow-400 font-bold text-[10px] sm:text-xs leading-none">Turn Fun Into Funds</span>
             </div>
           </Link>
@@ -82,7 +82,7 @@ const Header = () => {
               <div className="bg-gradient-to-r from-gray-800 to-gray-900 p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" />
-                  <h2 className="text-white font-black text-xl">A2Z Ludo</h2>
+                  <h2 className="text-white font-black text-xl">KheloLudo</h2>
                 </div>
                 <button 
                   onClick={() => setMenuOpen(false)}

@@ -98,7 +98,7 @@ export const uploadAvatar = async (req, res) => {
       // Upload new avatar to Cloudinary with optimization
       console.log('Uploading to Cloudinary...');
       const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: 'a2z-ludo/avatars',
+        folder: 'kheloludo/avatars',
         public_id: `user_${user._id}_${Date.now()}`,
         transformation: [
           { width: 400, height: 400, crop: 'fill', gravity: 'face' },

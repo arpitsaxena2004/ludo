@@ -52,14 +52,14 @@ export const submitKYC = async (req, res) => {
     // Upload document front
     const documentFrontUpload = await uploadToCloudinary(
       req.files.documentFront[0].path,
-      'a2z-ludo/kyc',
+      'kheloludo/kyc',
       `${userId}_front_${timestamp}`
     );
 
     // Upload selfie
     const selfieUpload = await uploadToCloudinary(
       req.files.selfie[0].path,
-      'a2z-ludo/kyc',
+      'kheloludo/kyc',
       `${userId}_selfie_${timestamp}`
     );
 
@@ -68,7 +68,7 @@ export const submitKYC = async (req, res) => {
     if (req.files.documentBack && req.files.documentBack[0]) {
       const documentBackUpload = await uploadToCloudinary(
         req.files.documentBack[0].path,
-        'a2z-ludo/kyc',
+        'kheloludo/kyc',
         `${userId}_back_${timestamp}`
       );
       documentBackUrl = documentBackUpload.secure_url;

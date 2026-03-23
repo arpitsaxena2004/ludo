@@ -26,7 +26,7 @@ export const sendOTP = async (phoneNumber, otp) => {
 
     // In production with Twilio configured
     const message = await client.messages.create({
-      body: `Your A2Z Ludo verification code is: ${otp}. Valid for 10 minutes.`,
+      body: `Your KheloLudo verification code is: ${otp}. Valid for 10 minutes.`,
       from: twilioPhoneNumber,
       to: phoneNumber
     });

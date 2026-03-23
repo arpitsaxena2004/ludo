@@ -1,7 +1,7 @@
 {
-  "name": "a2z-ludo-server",
+  "name": "kheloludo-server",
   "version": "1.0.0",
-  "description": "Backend server for A2Z Ludo",
+  "description": "Backend server for KheloLudo",
   "main": "server.js",
   "type": "module",
   "scripts": {

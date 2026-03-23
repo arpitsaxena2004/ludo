@@ -31,7 +31,7 @@ const TDSPolicy = () => {
         
         <div className="space-y-6 text-gray-300">
           <section>
-            <p className="text-yellow-400 font-bold mb-2">In line with the provisions contained in Finance Act, 2023, following TDS policy is applicable for all players on A2Z Ludo from 1 Apr, 2023.</p>
+            <p className="text-yellow-400 font-bold mb-2">In line with the provisions contained in Finance Act, 2023, following TDS policy is applicable for all players on KheloLudo from 1 Apr, 2023.</p>
           </section>
 
           <section>

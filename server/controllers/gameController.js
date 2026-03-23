@@ -252,7 +252,7 @@ export const uploadWinScreenshot = async (req, res) => {
       try {
         console.log('Uploading screenshot to Cloudinary...');
         const result = await cloudinary.uploader.upload(req.file.path, {
-          folder: 'a2z-ludo/game-screenshots',
+          folder: 'kheloludo/game-screenshots',
           public_id: `game_${roomCode}_${req.user._id}_${Date.now()}`,
           transformation: [
             { width: 1200, height: 1200, crop: 'limit' },

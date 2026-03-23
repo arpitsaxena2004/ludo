@@ -20,12 +20,12 @@ const About = () => {
         animate={{ y: 0, opacity: 1 }}
         className="bg-gray-800/50 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-gray-700"
       >
-        <h1 className="text-3xl font-black text-white mb-6">About A2Z Ludo</h1>
+        <h1 className="text-3xl font-black text-white mb-6">About KheloLudo</h1>
         
         <div className="space-y-4 text-gray-300">
           <section>
             <h2 className="text-xl font-bold text-white mb-2">Who We Are</h2>
-            <p>A2Z Ludo is India's premier online Ludo gaming platform where you can turn fun into funds. We provide a secure, fair, and entertaining environment for Ludo enthusiasts.</p>
+            <p>KheloLudo is India's premier online Ludo gaming platform where you can turn fun into funds. We provide a secure, fair, and entertaining environment for Ludo enthusiasts.</p>
           </section>
 
           <section>

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: a2z-ludo-server
+    name: kheloludo-server
     runtime: node
     rootDir: server
     buildCommand: npm install

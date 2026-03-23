@@ -47,7 +47,7 @@ const Refer = () => {
   };
 
   const handleShareWhatsApp = () => {
-    const message = `🎮 Join A2Z Ludo and get ₹${referralBonus} bonus!\n\n💰 Play Ludo & Win Real Money\n🎁 Use my referral code: ${user?.referralCode}\n\n👉 ${referralInfo?.referralLink || window.location.origin}`;
+    const message = `🎮 Join KheloLudo and get ₹${referralBonus} bonus!\n\n💰 Play Ludo & Win Real Money\n🎁 Use my referral code: ${user?.referralCode}\n\n👉 ${referralInfo?.referralLink || window.location.origin}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
   };
 
