@@ -22,7 +22,7 @@ const createDefaultAdmin = async () => {
 
     // Create new admin
     const admin = await Admin.create({
-      email: process.env.ADMIN_EMAIL || 'admin@a2zludo.com',
+      email: process.env.ADMIN_EMAIL || 'admin@kheloludo.com',
       password: process.env.ADMIN_PASSWORD || 'admin123',
       name: 'Super Admin',
       role: 'super_admin',

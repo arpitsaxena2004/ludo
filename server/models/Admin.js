@@ -29,6 +29,8 @@ const adminSchema = new mongoose.Schema({
       'manage_games',
       'manage_deposits',
       'manage_withdrawals',
+      'manage_transactions',
+      'manage_kyc',
       'manage_support',
       'manage_settings',
       'view_analytics',

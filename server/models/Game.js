@@ -89,7 +89,6 @@ const gameSchema = new mongoose.Schema({
 
 // Index for faster queries
 gameSchema.index({ status: 1, createdAt: -1 });
-gameSchema.index({ roomCode: 1 });
 
 const Game = mongoose.model('Game', gameSchema);
 
