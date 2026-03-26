@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaBars, FaWallet, FaGift, FaChevronRight, FaUser, FaGamepad, FaHistory, FaHeadset, FaFileAlt, FaArrowLeft, FaLanguage } from 'react-icons/fa';
+import { FaBars, FaWallet, FaGift, FaChevronRight, FaUser, FaGamepad, FaHistory, FaHeadset, FaFileAlt, FaArrowLeft, FaArrowDown, FaArrowUp } from 'react-icons/fa';
 import useAuthStore from '../store/authStore';
 
 const Header = () => {
@@ -36,23 +36,19 @@ const Header = () => {
 
           <div className="flex items-center gap-2 sm:gap-3">
             <Link 
-              to="/wallet"
-              className="bg-gradient-to-r from-yellow-400 to-orange-500 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl flex items-center gap-1.5 hover:scale-105 transition-transform shadow-lg"
+              to="/deposit"
+              className="bg-gradient-to-r from-green-500 to-emerald-600 p-2.5 rounded-xl flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
+              title="Deposit"
             >
-              <FaWallet className="text-white text-sm sm:text-base" />
-              <span className="text-white font-black text-xs sm:text-sm">
-                {user?.depositCash || 0}
-              </span>
+              <FaArrowDown className="text-white text-lg" />
             </Link>
             
             <Link 
-              to="/wallet"
-              className="bg-gradient-to-r from-pink-500 to-purple-500 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl flex items-center gap-1.5 hover:scale-105 transition-transform shadow-lg"
+              to="/withdrawal"
+              className="bg-gradient-to-r from-pink-500 to-purple-500 p-2.5 rounded-xl flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
+              title="Withdraw"
             >
-              <FaGift className="text-white text-sm sm:text-base" />
-              <span className="text-white font-black text-xs sm:text-sm">
-                {user?.winningCash?.toFixed(0) || '0'}
-              </span>
+              <FaArrowUp className="text-white text-lg" />
             </Link>
           </div>
         </div>

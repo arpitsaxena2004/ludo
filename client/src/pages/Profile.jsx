@@ -1,23 +1,28 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaEdit, FaSignOutAlt, FaPhone, FaEnvelope, FaCheckCircle, FaSave, FaTimes, FaCamera } from 'react-icons/fa';
+import { FaEdit, FaSignOutAlt, FaPhone, FaCheckCircle, FaSave, FaTimes, FaQrcode, FaBuilding } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
 import { useNavigate } from 'react-router-dom';
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 
 const Profile = () => {
   const { user, logout, updateUser } = useAuthStore();
   const navigate = useNavigate();
-  const [referCode, setReferCode] = useState('');
-  const [isEditingUsername, setIsEditingUsername] = useState(false);
-  const [isEditingEmail, setIsEditingEmail] = useState(false);
-  const [editedUsername, setEditedUsername] = useState(user?.username || '');
-  const [editedEmail, setEditedEmail] = useState(user?.email || '');
+
   const [loading, setLoading] = useState(false);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const avatarInputRef = useRef(null);
+
+  const [isEditingUpi, setIsEditingUpi] = useState(false);
+  const [editedUpiId, setEditedUpiId] = useState(user?.upiId || '');
+
+  const [isEditingBank, setIsEditingBank] = useState(false);
+  const [editedBankDetails, setEditedBankDetails] = useState({
+    accountHolderName: user?.bankDetails?.accountHolderName || '',
+    accountNumber: user?.bankDetails?.accountNumber || '',
+    ifscCode: user?.bankDetails?.ifscCode || '',
+    bankName: user?.bankDetails?.bankName || ''
+  });
 
   const handleLogout = () => {
     logout();
@@ -25,163 +30,37 @@ const Profile = () => {
     navigate('/login');
   };
 
-  const handleSubmitReferCode = async () => {
-    if (!referCode.trim()) {
-      toast.error('Please enter a refer code');
-      return;
-    }
-
-    if (user?.referredBy) {
-      toast.error('You have already applied a referral code');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await axios.post(
-        '/user/apply-referral',
-        { referralCode: referCode },
-        {
-          baseURL: import.meta.env.VITE_API_URL,
-          headers: {
-            Authorization: `Bearer ${JSON.parse(localStorage.getItem('auth-storage')).state.token}`
-          }
-        }
-      );
-
-      updateUser({ 
-        referredBy: referCode.toUpperCase(),
-        bonusCash: response.data.user.bonusCash
-      });
-      toast.success(response.data.message);
-      setReferCode('');
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to apply referral code');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUpdateUsername = async () => {
-    if (!editedUsername.trim()) {
-      toast.error('Username cannot be empty');
-      return;
-    }
-
-    if (editedUsername === user?.username) {
-      setIsEditingUsername(false);
-      return;
-    }
-
+  const handleUpdatePaymentDetails = async (type) => {
     setLoading(true);
     try {
       const authStorage = localStorage.getItem('auth-storage');
       const token = authStorage ? JSON.parse(authStorage).state.token : null;
       
+      const payload = type === 'upi' ? { upiId: editedUpiId } : { bankDetails: editedBankDetails };
+      
       const response = await axios.put(
         '/user/profile',
-        { username: editedUsername },
+        payload,
         {
           baseURL: import.meta.env.VITE_API_URL,
           headers: { Authorization: `Bearer ${token}` }
         }
       );
 
-      updateUser({ username: editedUsername });
-      toast.success('Username updated successfully!');
-      setIsEditingUsername(false);
+      updateUser(payload);
+      toast.success(`${type === 'upi' ? 'UPI ID' : 'Bank Details'} updated successfully!`);
+      if (type === 'upi') setIsEditingUpi(false);
+      else setIsEditingBank(false);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to update username');
-      setEditedUsername(user?.username || '');
+      toast.error(error.response?.data?.message || 'Failed to update details');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUpdateEmail = async () => {
-    if (!editedEmail.trim()) {
-      toast.error('Email cannot be empty');
-      return;
-    }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(editedEmail)) {
-      toast.error('Please enter a valid email address');
-      return;
-    }
 
-    if (editedEmail === user?.email) {
-      setIsEditingEmail(false);
-      return;
-    }
 
-    setLoading(true);
-    try {
-      const authStorage = localStorage.getItem('auth-storage');
-      const token = authStorage ? JSON.parse(authStorage).state.token : null;
-      
-      const response = await axios.put(
-        '/user/profile',
-        { email: editedEmail },
-        {
-          baseURL: import.meta.env.VITE_API_URL,
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      updateUser({ email: editedEmail });
-      toast.success('Email updated successfully!');
-      setIsEditingEmail(false);
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to update email');
-      setEditedEmail(user?.email || '');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAvatarChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size should be less than 5MB');
-      return;
-    }
-
-    setUploadingAvatar(true);
-    try {
-      const authStorage = localStorage.getItem('auth-storage');
-      const token = authStorage ? JSON.parse(authStorage).state.token : null;
-
-      const formData = new FormData();
-      formData.append('avatar', file);
-
-      const response = await axios.post(
-        '/user/avatar',
-        formData,
-        {
-          baseURL: import.meta.env.VITE_API_URL,
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          }
-        }
-      );
-
-      updateUser({ avatar: response.data.avatar });
-      toast.success('Profile picture updated successfully!');
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to upload profile picture');
-    } finally {
-      setUploadingAvatar(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24">
@@ -193,71 +72,25 @@ const Profile = () => {
       >
         <div className="relative inline-block mb-2">
           <img
-            src={user?.avatar || 'https://via.placeholder.com/100'}
+            src={user?.avatar && user.avatar.startsWith('/') ? user.avatar : '/avatar1.png'}
             alt="Avatar"
             className="w-20 h-20 rounded-full border-4 border-white shadow-xl object-cover mx-auto"
           />
-          <input
-            type="file"
-            ref={avatarInputRef}
-            accept="image/*"
-            onChange={handleAvatarChange}
-            className="hidden"
-          />
-          <button
-            onClick={() => avatarInputRef.current?.click()}
-            disabled={uploadingAvatar}
-            className="absolute bottom-0 right-0 bg-blue-500 text-white w-7 h-7 rounded-full flex items-center justify-center hover:bg-blue-600 transition-all shadow-lg disabled:opacity-50"
-          >
-            {uploadingAvatar ? (
-              <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></div>
-            ) : (
-              <FaCamera className="text-xs" />
-            )}
-          </button>
         </div>
         
         <div className="flex items-center justify-center gap-2 mb-1">
           <span className="text-red-500 text-xl">💎</span>
-          {isEditingUsername ? (
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={editedUsername}
-                onChange={(e) => setEditedUsername(e.target.value)}
-                className="bg-white/20 border-2 border-white/40 rounded-lg px-2 py-1 text-white text-lg font-bold outline-none focus:border-blue-400"
-                autoFocus
-              />
-              <button
-                onClick={handleUpdateUsername}
-                disabled={loading}
-                className="text-green-400 text-lg hover:scale-110 transition-all"
-              >
-                <FaSave />
-              </button>
-              <button
-                onClick={() => {
-                  setIsEditingUsername(false);
-                  setEditedUsername(user?.username || '');
-                }}
-                className="text-red-400 text-lg hover:scale-110 transition-all"
-              >
-                <FaTimes />
-              </button>
-            </div>
-          ) : (
-            <>
-              <h2 className="text-xl font-black text-white">
-                {user?.username || 'User'}
-              </h2>
-              <button
-                onClick={() => setIsEditingUsername(true)}
-                className="text-blue-400 text-lg hover:scale-110 transition-all"
-              >
-                <FaEdit />
-              </button>
-            </>
-          )}
+          <h2 className="text-xl font-black text-white">
+            {user?.username || 'User'}
+          </h2>
+        </div>
+
+        {/* Display Mobile Number under Username */}
+        <div className="flex items-center justify-center gap-2 mt-1 bg-white/10 rounded-full py-1.5 px-4 w-fit mx-auto border border-white/20 backdrop-blur-sm">
+          <FaPhone className="text-white/80 text-xs" />
+          <span className="text-white/90 text-sm font-semibold tracking-wide">
+            +91 {user?.phoneNumber}
+          </span>
         </div>
       </motion.div>
 
@@ -265,73 +98,80 @@ const Profile = () => {
       <div className="mb-4">
         <h3 className="text-gray-800 font-bold text-base mb-3">Complete Profile</h3>
         
-        {/* Mobile Number */}
+        {/* UPI Details */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.1 }}
+          transition={{ delay: 0.2 }}
           className="bg-white rounded-xl p-3 mb-2 shadow-md flex items-center gap-3"
         >
-          <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center flex-shrink-0">
-            <FaPhone className="text-blue-400 text-xl" />
+          <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center flex-shrink-0">
+            <FaQrcode className="text-white text-xl" />
           </div>
           <div className="flex-1">
-            <p className="text-gray-600 text-xs font-semibold">Mobile Number</p>
-            <p className="text-gray-800 font-bold text-base">{user?.phoneNumber}</p>
-          </div>
-        </motion.div>
-
-        {/* Email Address */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.15 }}
-          className="bg-white rounded-xl p-3 mb-2 shadow-md flex items-center gap-3"
-        >
-          <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
-            <FaEnvelope className="text-white text-xl" />
-          </div>
-          <div className="flex-1">
-            <p className="text-gray-600 text-xs font-semibold">Email Address</p>
-            {isEditingEmail ? (
+            <p className="text-gray-600 text-xs font-semibold">UPI ID</p>
+            {isEditingUpi ? (
               <input
-                type="email"
-                value={editedEmail}
-                onChange={(e) => setEditedEmail(e.target.value)}
-                className="bg-gray-100 border-2 border-blue-300 rounded-lg px-2 py-1 text-gray-800 font-bold text-base outline-none focus:border-blue-500 w-full"
+                type="text"
+                value={editedUpiId}
+                onChange={(e) => setEditedUpiId(e.target.value)}
+                placeholder="Enter UPI ID (e.g. name@upi)"
+                className="bg-gray-100 border-2 border-purple-300 rounded-lg px-2 py-1 text-gray-800 font-bold text-sm outline-none focus:border-purple-500 w-full"
                 autoFocus
               />
             ) : (
-              <p className="text-gray-800 font-bold text-base">{user?.email || 'Not set'}</p>
+              <p className="text-gray-800 font-bold text-sm truncate">{user?.upiId || 'Not set'}</p>
             )}
           </div>
-          {isEditingEmail ? (
+          {isEditingUpi ? (
             <div className="flex gap-2">
-              <button
-                onClick={handleUpdateEmail}
-                disabled={loading}
-                className="text-green-500 text-xl hover:scale-110 transition-all"
-              >
-                <FaSave />
-              </button>
-              <button
-                onClick={() => {
-                  setIsEditingEmail(false);
-                  setEditedEmail(user?.email || '');
-                }}
-                className="text-red-500 text-xl hover:scale-110 transition-all"
-              >
-                <FaTimes />
-              </button>
+              <button onClick={() => handleUpdatePaymentDetails('upi')} disabled={loading} className="text-green-500 text-xl hover:scale-110 transition-all"><FaSave /></button>
+              <button onClick={() => { setIsEditingUpi(false); setEditedUpiId(user?.upiId || ''); }} className="text-red-500 text-xl hover:scale-110 transition-all"><FaTimes /></button>
             </div>
           ) : (
-            <button
-              onClick={() => setIsEditingEmail(true)}
-              className="text-purple-500 text-xl hover:scale-110 transition-all"
-            >
-              <FaEdit />
-            </button>
+            <button onClick={() => setIsEditingUpi(true)} className="text-purple-500 text-xl hover:scale-110 transition-all"><FaEdit /></button>
           )}
+        </motion.div>
+
+        {/* Bank Details */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.25 }}
+          className="bg-white rounded-xl p-3 mb-2 shadow-md"
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center flex-shrink-0">
+              <FaBuilding className="text-white text-xl" />
+            </div>
+            <div className="flex-1 flex justify-between items-center">
+              <p className="text-gray-600 text-xs font-semibold">Bank Details</p>
+              {isEditingBank ? (
+                <div className="flex gap-2">
+                  <button onClick={() => handleUpdatePaymentDetails('bank')} disabled={loading} className="text-green-500 text-xl hover:scale-110 transition-all"><FaSave /></button>
+                  <button onClick={() => { setIsEditingBank(false); setEditedBankDetails({ accountHolderName: user?.bankDetails?.accountHolderName || '', accountNumber: user?.bankDetails?.accountNumber || '', ifscCode: user?.bankDetails?.ifscCode || '', bankName: user?.bankDetails?.bankName || '' }); }} className="text-red-500 text-xl hover:scale-110 transition-all"><FaTimes /></button>
+                </div>
+              ) : (
+                <button onClick={() => setIsEditingBank(true)} className="text-purple-500 text-xl hover:scale-110 transition-all"><FaEdit /></button>
+              )}
+            </div>
+          </div>
+          <div className="pl-14">
+            {isEditingBank ? (
+              <div className="flex flex-col gap-2">
+                <input type="text" value={editedBankDetails.accountHolderName} onChange={(e) => setEditedBankDetails(prev => ({ ...prev, accountHolderName: e.target.value }))} placeholder="Account Holder Name" className="bg-gray-100 border-2 border-green-300 rounded-lg px-2 py-1 text-gray-800 font-bold text-sm outline-none focus:border-green-500 w-full" />
+                <input type="text" value={editedBankDetails.accountNumber} onChange={(e) => setEditedBankDetails(prev => ({ ...prev, accountNumber: e.target.value }))} placeholder="Account Number" className="bg-gray-100 border-2 border-green-300 rounded-lg px-2 py-1 text-gray-800 font-bold text-sm outline-none focus:border-green-500 w-full" />
+                <input type="text" value={editedBankDetails.ifscCode} onChange={(e) => setEditedBankDetails(prev => ({ ...prev, ifscCode: e.target.value }))} placeholder="IFSC Code" className="bg-gray-100 border-2 border-green-300 rounded-lg px-2 py-1 text-gray-800 font-bold text-sm outline-none focus:border-green-500 w-full uppercase" />
+                <input type="text" value={editedBankDetails.bankName} onChange={(e) => setEditedBankDetails(prev => ({ ...prev, bankName: e.target.value }))} placeholder="Bank Name" className="bg-gray-100 border-2 border-green-300 rounded-lg px-2 py-1 text-gray-800 font-bold text-sm outline-none focus:border-green-500 w-full" />
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1 text-gray-800 font-bold text-sm">
+                <p>{user?.bankDetails?.accountHolderName || 'Name not set'}</p>
+                <p className="text-gray-500">{user?.bankDetails?.accountNumber ? `A/C: ${user?.bankDetails?.accountNumber}` : 'Account not set'}</p>
+                <p className="text-gray-500 text-xs">{user?.bankDetails?.ifscCode || ''} {user?.bankDetails?.bankName ? `| ${user?.bankDetails?.bankName}` : ''}</p>
+              </div>
+            )}
+          </div>
         </motion.div>
       </div>
 
@@ -348,42 +188,7 @@ const Profile = () => {
         </motion.div>
       </Link> */}
 
-      {/* Referral Code Section */}
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.25 }}
-        className="mb-4"
-      >
-        <h3 className="text-gray-800 font-bold text-base mb-3">
-          {user?.referredBy ? 'Applied Referral Code' : 'Use Refer Code'}
-        </h3>
-        {user?.referredBy ? (
-          <div className="bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-300 rounded-xl px-3 py-3 flex items-center gap-2">
-            <FaCheckCircle className="text-green-600 text-xl flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-gray-600 text-xs font-medium">Referral Code Applied</p>
-              <p className="text-gray-800 font-bold text-base">{user.referredBy}</p>
-            </div>
-          </div>
-        ) : (
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={referCode}
-              onChange={(e) => setReferCode(e.target.value.toUpperCase())}
-              placeholder="Enter Refer Code"
-              className="flex-1 bg-white border-2 border-gray-300 rounded-xl px-3 py-2.5 text-gray-800 font-semibold outline-none focus:border-blue-500 transition-all text-sm"
-            />
-            <button
-              onClick={handleSubmitReferCode}
-              className="bg-green-100 border-2 border-green-300 w-12 h-12 rounded-xl flex items-center justify-center hover:scale-105 transition-all flex-shrink-0"
-            >
-              <FaCheckCircle className="text-green-600 text-xl" />
-            </button>
-          </div>
-        )}
-      </motion.div>
+
 
       {/* Other Details */}
       <div className="mb-4">

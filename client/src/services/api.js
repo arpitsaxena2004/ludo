@@ -76,7 +76,7 @@ export const walletAPI = {
 export const gameAPI = {
   createGame: (data) => api.post('/game/create', data),
   joinGame: (roomCode) => api.post(`/game/join/${roomCode}`),
-  getAvailableGames: () => api.get('/game/available'),
+  getAvailableGames: (gameType) => api.get(gameType ? `/game/available?gameType=${gameType}` : '/game/available'),
   getGameDetails: (roomCode) => api.get(`/game/${roomCode}`),
   getMyGames: () => api.get('/game/my-games'),
   uploadWinScreenshot: (formData) => api.post('/game/upload-screenshot', formData, {

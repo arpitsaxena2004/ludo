@@ -20,6 +20,8 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsConditions from './pages/TermsConditions';
 import TDSPolicy from './pages/TDSPolicy';
 import ResponsibleGaming from './pages/ResponsibleGaming';
+import SnakeLadderLobby from './pages/SnakeLadderLobby';
+import SnakeLadderGame from './pages/SnakeLadderGame';
 import About from './pages/About';
 import Contact from './pages/Contact';
 
@@ -70,6 +72,8 @@ function App() {
           <Route path="/profile" element={isAuthenticated ? <Profile /> : <Navigate to="/login" />} />
           <Route path="/game-lobby" element={isAuthenticated ? <GameLobby /> : <Navigate to="/login" />} />
           <Route path="/battle/:roomCode" element={isAuthenticated ? <BattleRoom /> : <Navigate to="/login" />} />
+          <Route path="/snake-ladder-lobby" element={isAuthenticated ? <SnakeLadderLobby /> : <Navigate to="/login" />} />
+          <Route path="/snake-battle/:roomCode" element={isAuthenticated ? <SnakeLadderGame /> : <Navigate to="/login" />} />
           <Route path="/transactions" element={isAuthenticated ? <Transactions /> : <Navigate to="/login" />} />
           <Route path="/kyc" element={isAuthenticated ? <KYC /> : <Navigate to="/login" />} />
           <Route path="/privacy-policy" element={isAuthenticated ? <PrivacyPolicy /> : <Navigate to="/login" />} />

@@ -34,7 +34,7 @@ const GameLobby = () => {
 
   const fetchBattles = async () => {
     try {
-      const response = await gameAPI.getAvailableGames();
+      const response = await gameAPI.getAvailableGames('ludo');
       const games = response.data.games || [];
       setOpenBattles(games.filter(g => g.status === 'waiting'));
       setRunningBattles(games.filter(g => g.status === 'accepted' || g.status === 'in_progress'));
@@ -60,7 +60,8 @@ const GameLobby = () => {
     setLoading(true);
     try {
       const response = await gameAPI.createGame({
-        entryFee: parseFloat(entryAmount)
+        entryFee: parseFloat(entryAmount),
+        gameType: 'ludo'
       });
       
       toast.success('Battle created successfully! Waiting for opponent...');

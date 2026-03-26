@@ -1,13 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaHome, FaWallet, FaUserFriends, FaHeadset, FaUser } from 'react-icons/fa';
+import { FaHome, FaUserFriends, FaHeadset, FaUser } from 'react-icons/fa';
 
 const BottomNav = () => {
   const location = useLocation();
 
   const navItems = [
     { path: '/', icon: FaHome, label: 'Home' },
-    { path: '/wallet', icon: FaWallet, label: 'Wallet' },
     { path: '/refer', icon: FaUserFriends, label: 'Refer' },
     { path: '/support', icon: FaHeadset, label: 'Support' },
     { path: '/profile', icon: FaUser, label: 'Profile' },
