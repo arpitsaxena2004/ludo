@@ -51,13 +51,18 @@ export const register = async (req, res) => {
     const signupBonusConfig = await AppConfig.findOne({ key: 'signupBonus' });
     const signupBonus = signupBonusConfig ? signupBonusConfig.value : 50;
 
+    // Choose a random cartoon avatar
+    const avatars = ['/avatar1.png', '/avatar2.png', '/avatar3.png'];
+    const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
+
     // Create new user
     const user = await User.create({
       phoneNumber,
       password,
       referralCode: referralCodeGenerated,
       referredBy: referralCode || null,
-      bonusCash: signupBonus // Welcome bonus from config
+      bonusCash: signupBonus, // Welcome bonus from config
+      avatar: randomAvatar
     });
 
     // If referred by someone, add bonus to referrer
@@ -90,7 +95,9 @@ export const register = async (req, res) => {
         bonusCash: user.bonusCash,
         totalBalance: user.getTotalBalance(),
         isKYCVerified: user.isKYCVerified,
-        kycDetails: user.kycDetails
+        kycDetails: user.kycDetails,
+        upiId: user.upiId,
+        bankDetails: user.bankDetails
       }
     });
   } catch (error) {
@@ -154,7 +161,9 @@ export const login = async (req, res) => {
         bonusCash: user.bonusCash,
         totalBalance: user.getTotalBalance(),
         isKYCVerified: user.isKYCVerified,
-        kycDetails: user.kycDetails
+        kycDetails: user.kycDetails,
+        upiId: user.upiId,
+        bankDetails: user.bankDetails
       }
     });
   } catch (error) {
@@ -193,6 +202,8 @@ export const getMe = async (req, res) => {
         isKYCVerified: user.isKYCVerified,
         kycStatus: user.kycDetails?.status || 'not_submitted',
         kycDetails: user.kycDetails,
+        upiId: user.upiId,
+        bankDetails: user.bankDetails,
         createdAt: user.createdAt
       }
     });

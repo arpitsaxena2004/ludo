@@ -7,7 +7,7 @@ import fs from 'fs';
 // @access  Private
 export const updateProfile = async (req, res) => {
   try {
-    const { email, username } = req.body;
+    const { email, username, upiId, bankDetails } = req.body;
     const user = await User.findById(req.user._id);
 
     // Check if username is already taken by another user
@@ -38,6 +38,19 @@ export const updateProfile = async (req, res) => {
       user.email = email.trim().toLowerCase();
     }
 
+    // Update payment details if provided
+    if (upiId !== undefined) {
+      user.upiId = upiId.trim();
+    }
+    
+    if (bankDetails) {
+      if (!user.bankDetails) user.bankDetails = {};
+      if (bankDetails.accountHolderName !== undefined) user.bankDetails.accountHolderName = bankDetails.accountHolderName.trim();
+      if (bankDetails.accountNumber !== undefined) user.bankDetails.accountNumber = bankDetails.accountNumber.trim();
+      if (bankDetails.ifscCode !== undefined) user.bankDetails.ifscCode = bankDetails.ifscCode.trim();
+      if (bankDetails.bankName !== undefined) user.bankDetails.bankName = bankDetails.bankName.trim();
+    }
+
     await user.save();
 
     res.status(200).json({
@@ -47,7 +60,9 @@ export const updateProfile = async (req, res) => {
         phoneNumber: user.phoneNumber,
         email: user.email,
         username: user.username,
-        avatar: user.avatar
+        avatar: user.avatar,
+        upiId: user.upiId,
+        bankDetails: user.bankDetails
       }
     });
   } catch (error) {

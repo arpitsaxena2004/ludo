@@ -7,17 +7,16 @@ import AppConfig from '../models/AppConfig.js';
 // @access  Private
 export const getAvailableGames = async (req, res) => {
   try {
-    const games = await Game.find({
-      status: { $in: ['waiting', 'accepted', 'in_progress'] }
-    })
+    const { gameType } = req.query;
+    const filter = { status: { $in: ['waiting', 'accepted', 'in_progress'] } };
+    if (gameType) filter.gameType = gameType;
+
+    const games = await Game.find(filter)
       .populate('players.user', 'username phoneNumber avatar')
       .sort({ createdAt: -1 })
       .limit(50);
 
-    res.status(200).json({
-      success: true,
-      games
-    });
+    res.status(200).json({ success: true, games });
   } catch (error) {
     console.error('Get Available Games Error:', error);
     res.status(500).json({ message: 'Failed to fetch games', error: error.message });
@@ -29,7 +28,7 @@ export const getAvailableGames = async (req, res) => {
 // @access  Private
 export const createGame = async (req, res) => {
   try {
-    const { entryFee } = req.body;
+    const { entryFee, gameType = 'ludo' } = req.body;
 
     if (!entryFee) {
       return res.status(400).json({ message: 'Entry fee is required' });
@@ -73,6 +72,7 @@ export const createGame = async (req, res) => {
       entryFee,
       prizePool,
       commissionRate,
+      gameType: gameType || 'ludo',
       players: [{
         user: user._id,
         joinedAt: new Date()

@@ -82,6 +82,11 @@ const gameSchema = new mongoose.Schema({
   commissionRate: {
     type: Number,
     default: 5
+  },
+  gameType: {
+    type: String,
+    enum: ['ludo', 'snakeLadder'],
+    default: 'ludo'
   }
 }, {
   timestamps: true

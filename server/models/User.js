@@ -57,6 +57,17 @@ const userSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
+  upiId: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  bankDetails: {
+    accountHolderName: { type: String, trim: true, default: '' },
+    accountNumber: { type: String, trim: true, default: '' },
+    ifscCode: { type: String, trim: true, default: '' },
+    bankName: { type: String, trim: true, default: '' }
+  },
   totalCoinsWon: {
     type: Number,
     default: 0
