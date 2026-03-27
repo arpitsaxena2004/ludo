@@ -36,6 +36,17 @@ const Header = () => {
 
           <div className="flex items-center gap-1.5 sm:gap-3">
             <Link 
+              to="/wallet"
+              className="bg-black/60 border border-sky-500/50 px-2 sm:px-3 py-1 sm:py-2 rounded-lg sm:rounded-xl flex items-center justify-center gap-1.5 hover:scale-105 transition-transform shadow-lg"
+              title="Wallet"
+            >
+              <FaWallet className="text-sky-400 text-sm sm:text-base" />
+              <span className="text-white text-[9px] sm:text-xs font-bold whitespace-nowrap">
+                ₹{((user?.depositCash || 0) + (user?.winningCash || 0) + (user?.bonusCash || 0)).toFixed(0)}
+              </span>
+            </Link>
+
+            <Link 
               to="/deposit"
               className="bg-gradient-to-r from-green-500 to-emerald-600 px-1.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl flex flex-col items-center justify-center hover:scale-110 transition-transform shadow-lg min-w-[50px] sm:min-w-[70px]"
               title="Deposit"
