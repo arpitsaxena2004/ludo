@@ -241,18 +241,20 @@ const Login = () => {
                   </div>
                 </div>
 
-                <div className="mb-6">
-                  <label className="block text-gray-700 mb-2 font-medium text-sm">
-                    Referral Code (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={referralCode}
-                    onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                    placeholder="Enter referral code"
-                    className="w-full bg-gray-50 border-2 border-gray-300 px-4 py-4 rounded-xl text-gray-800 outline-none focus:border-orange-500 transition-colors placeholder-gray-400"
-                  />
-                </div>
+                {/* Referral Code is only shown and locked if provided in the URL */}
+                {searchParams.get('ref') && (
+                  <div className="mb-6">
+                    <label className="block text-gray-700 mb-2 font-medium text-sm">
+                      Referral Code
+                    </label>
+                    <input
+                      type="text"
+                      value={searchParams.get('ref')}
+                      readOnly
+                      className="w-full bg-gray-200 border-2 border-gray-300 px-4 py-4 rounded-xl text-gray-800 outline-none cursor-not-allowed"
+                    />
+                  </div>
+                )}
               </>
             )}
 
