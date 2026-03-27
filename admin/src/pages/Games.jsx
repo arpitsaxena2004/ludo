@@ -28,22 +28,33 @@ const Games = () => {
   };
 
   const handleDeclareWinner = async (winnerId) => {
-    if (!window.confirm('Are you sure you want to declare this player as the winner?')) {
-      return;
-    }
-
+    if (!window.confirm('Are you sure you want to declare this player as the WINNER?')) return;
     setDeclaring(true);
     try {
       const response = await adminAPI.declareWinner(selectedGame.roomCode, winnerId);
-      toast.success('Winner declared successfully!');
-      
-      // Update the selected game with the response
+      toast.success('Winner declared and prize credited!');
       setSelectedGame(response.data.game);
-      
-      // Refresh the games list
       fetchGames();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to declare winner');
+    } finally {
+      setDeclaring(false);
+    }
+  };
+
+  const handleDeclareLoser = async (loserId) => {
+    if (!window.confirm('Declaring this player as LOSER will make the other player the WINNER and credit them the prize. Continue?')) return;
+    // The other player is the winner
+    const winnerId = selectedGame.players.find(p => p.user._id !== loserId)?.user._id;
+    if (!winnerId) { toast.error('Cannot find opponent'); return; }
+    setDeclaring(true);
+    try {
+      const response = await adminAPI.declareWinner(selectedGame.roomCode, winnerId);
+      toast.success('Loser marked — opponent declared winner and credited!');
+      setSelectedGame(response.data.game);
+      fetchGames();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to declare loser');
     } finally {
       setDeclaring(false);
     }
@@ -256,55 +267,97 @@ const Games = () => {
             <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700 mb-4">
               <h4 className="text-white font-semibold text-sm mb-3">Players & Results</h4>
               <div className="space-y-3">
-                {selectedGame.players?.map((player, idx) => (
-                  <div key={idx} className="bg-gray-700/50 rounded-lg p-3 border border-gray-600">
-                    <div className="flex items-center justify-between gap-3 mb-2">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                          {idx + 1}
+                {selectedGame.players?.map((player, idx) => {
+                  const canDeclare = !selectedGame.winner &&
+                    (selectedGame.status === 'in_progress' || selectedGame.status === 'completed');
+
+                  return (
+                    <div key={idx} className="bg-gray-700/50 rounded-lg p-3 border border-gray-600">
+                      <div className="flex items-center justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                            {idx + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white font-semibold text-sm truncate">{player.user?.username || player.user?.phoneNumber}</p>
+                            <p className="text-gray-400 text-xs">{player.user?.phoneNumber}</p>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white font-semibold text-sm truncate">{player.user?.username || player.user?.phoneNumber}</p>
-                          <p className="text-gray-400 text-xs">{player.user?.phoneNumber}</p>
-                        </div>
+
+                        {/* Result Badge */}
+                        {player.result ? (
+                          <span className={`px-2 py-1 rounded text-xs font-bold ${player.result === 'won' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
+                            {player.result === 'won' ? '✓ Won' : '✕ Lost'}
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 rounded text-xs font-bold bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                            ⏳ No Result
+                          </span>
+                        )}
                       </div>
-                      
-                      {/* Result Badge */}
-                      {player.result && (
-                        <span className={`px-2 py-1 rounded text-xs font-bold ${
-                          player.result === 'won' 
-                            ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                            : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                        }`}>
-                          {player.result === 'won' ? '✓ Won' : '✕ Lost'}
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="flex gap-2 flex-wrap">
+
+                      {/* Screenshot Preview */}
                       {player.winScreenshot && (
-                        <a
-                          href={player.winScreenshot}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1"
-                        >
-                          <FaImage className="text-xs" /> Screenshot
-                        </a>
+                        <div className="mb-3">
+                          <p className="text-gray-400 text-xs mb-1 flex items-center gap-1">
+                            <FaImage className="text-blue-400" />
+                            Win Screenshot
+                            {player.uploadedAt && (
+                              <span className="ml-auto text-yellow-400 font-semibold">
+                                Uploaded: {new Date(player.uploadedAt).toLocaleString('en-IN', {
+                                  day: '2-digit', month: 'short', year: 'numeric',
+                                  hour: '2-digit', minute: '2-digit', second: '2-digit',
+                                  hour12: true, timeZone: 'Asia/Kolkata'
+                                })} IST
+                              </span>
+                            )}
+                          </p>
+                          <a
+                            href={player.winScreenshot.startsWith('http') ? player.winScreenshot : `http://localhost:5000${player.winScreenshot}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <img
+                              src={player.winScreenshot.startsWith('http') ? player.winScreenshot : `http://localhost:5000${player.winScreenshot}`}
+                              alt="Win Screenshot"
+                              className="w-full rounded-lg border border-gray-600 object-contain max-h-56 bg-gray-900 hover:opacity-90 transition-opacity cursor-pointer"
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          </a>
+                          <p className="text-gray-500 text-[10px] mt-1 text-center">Click image to open full size</p>
+                        </div>
                       )}
-                      
-                      {selectedGame.status === 'completed' && !selectedGame.winner && player.result === 'won' && (
-                        <button
-                          onClick={() => handleDeclareWinner(player.user._id)}
-                          disabled={declaring}
-                          className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50 flex items-center gap-1"
-                        >
-                          <FaTrophy className="text-xs" /> Declare Winner
-                        </button>
+
+                      {/* Admin Action Buttons */}
+                      {canDeclare && (
+                        <div className="flex gap-2 flex-wrap">
+                          <button
+                            onClick={() => handleDeclareWinner(player.user._id)}
+                            disabled={declaring}
+                            className="flex items-center gap-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50 shadow-lg shadow-green-500/20"
+                          >
+                            <FaTrophy className="text-xs" />
+                            {declaring ? '...' : '🏆 Declare Winner'}
+                          </button>
+                          <button
+                            onClick={() => handleDeclareLoser(player.user._id)}
+                            disabled={declaring}
+                            className="flex items-center gap-1 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50 shadow-lg shadow-red-500/20"
+                          >
+                            {declaring ? '...' : '💀 Declare Loser'}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Already declared */}
+                      {selectedGame.winner && selectedGame.winner._id === player.user._id && (
+                        <div className="mt-2 flex items-center gap-1 text-yellow-400 text-xs font-bold">
+                          <FaTrophy /> Declared Winner — Prize Credited
+                        </div>
                       )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

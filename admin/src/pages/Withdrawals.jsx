@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { FaSearch, FaCheck, FaTimes, FaEye, FaClock, FaCheckCircle, FaTimesCircle, FaWallet, FaSpinner, FaUniversity, FaMobileAlt } from 'react-icons/fa';
+import { FaSearch, FaCheck, FaTimes, FaEye, FaClock, FaCheckCircle, FaTimesCircle, FaWallet, FaSpinner, FaUniversity, FaMobileAlt, FaUpload, FaImage } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import { useRef } from 'react';
 
 const Withdrawals = () => {
   const [withdrawals, setWithdrawals] = useState([]);
@@ -13,6 +14,9 @@ const Withdrawals = () => {
   const [showModal, setShowModal] = useState(false);
   const [adminNotes, setAdminNotes] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [paymentProof, setPaymentProof] = useState(null);
+  const [paymentProofPreview, setPaymentProofPreview] = useState('');
+  const proofInputRef = useRef(null);
 
   useEffect(() => {
     fetchWithdrawals();
@@ -58,23 +62,27 @@ const Withdrawals = () => {
 
   const handleApprove = async () => {
     if (!selectedWithdrawal) return;
-    
+    if (!paymentProof) {
+      toast.error('Please upload the payment screenshot before approving');
+      return;
+    }
     setProcessing(true);
     try {
       const adminStorage = localStorage.getItem('admin-storage');
       const token = adminStorage ? JSON.parse(adminStorage).state.token : null;
+      const formData = new FormData();
+      formData.append('paymentProof', paymentProof);
+      if (adminNotes) formData.append('adminNotes', adminNotes);
       await axios.put(
         `/payment/admin/withdrawal/${selectedWithdrawal._id}/approve`,
-        { adminNotes },
-        { 
-          baseURL: import.meta.env.VITE_API_URL,
-          headers: { Authorization: `Bearer ${token}` } 
-        }
+        formData,
+        { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
       );
-      
-      toast.success('Withdrawal approved successfully! 🎉');
+      toast.success('Withdrawal approved with payment proof! 🎉');
       setShowModal(false);
       setAdminNotes('');
+      setPaymentProof(null);
+      setPaymentProofPreview('');
       fetchWithdrawals();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to approve withdrawal');
@@ -113,6 +121,8 @@ const Withdrawals = () => {
   const openModal = (withdrawal) => {
     setSelectedWithdrawal(withdrawal);
     setAdminNotes(withdrawal.adminNotes || '');
+    setPaymentProof(null);
+    setPaymentProofPreview('');
     setShowModal(true);
   };
 
@@ -399,6 +409,52 @@ const Withdrawals = () => {
                   )}
                 </div>
               </div>
+
+              {/* Payment Screenshot Upload (required for approval) */}
+              {selectedWithdrawal.status === 'pending' && (
+                <div className="bg-yellow-500/10 border-2 border-yellow-500 rounded-xl p-4">
+                  <h3 className="text-yellow-400 font-bold mb-3 flex items-center gap-2">
+                    <FaUpload /> Upload Payment Screenshot <span className="text-red-400">*Required</span>
+                  </h3>
+                  <p className="text-gray-400 text-sm mb-3">Upload proof of payment transfer before approving. Stored for 30 days for dispute resolution.</p>
+                  <input type="file" ref={proofInputRef} accept="image/*" onChange={(e) => {
+                    const f = e.target.files[0]; if (!f) return;
+                    setPaymentProof(f); setPaymentProofPreview(URL.createObjectURL(f));
+                  }} className="hidden" />
+                  {paymentProofPreview ? (
+                    <div className="mb-3">
+                      <img src={paymentProofPreview} alt="Proof" className="w-full max-h-48 object-contain rounded-lg border border-gray-600 bg-gray-900" />
+                      <button onClick={() => { setPaymentProof(null); setPaymentProofPreview(''); }} className="mt-2 text-red-400 text-sm hover:text-red-300">✕ Remove</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => proofInputRef.current?.click()} className="w-full border-2 border-dashed border-yellow-500 rounded-xl p-6 text-yellow-400 hover:bg-yellow-500/10 transition-all flex flex-col items-center gap-2">
+                      <FaImage className="text-3xl" />
+                      <span className="font-semibold">Click to attach payment screenshot</span>
+                      <span className="text-xs text-gray-400">JPG/PNG, max 5MB</span>
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Show stored proof for approved withdrawals */}
+              {selectedWithdrawal.status === 'approved' && selectedWithdrawal.paymentScreenshot && (
+                <div className="bg-green-500/10 border border-green-500 rounded-xl p-4">
+                  <h3 className="text-green-400 font-bold mb-2 flex items-center gap-2">
+                    <FaImage /> Payment Proof
+                  </h3>
+                  <img 
+                    src={selectedWithdrawal.paymentScreenshot.startsWith('http') ? selectedWithdrawal.paymentScreenshot : `http://localhost:5000${selectedWithdrawal.paymentScreenshot}`} 
+                    alt="Payment Proof" 
+                    className="w-full max-h-64 object-contain rounded-lg border border-gray-600 bg-gray-900 mb-2" 
+                  />
+                  {selectedWithdrawal.screenshotExpiresAt && (
+                    <p className="text-gray-400 text-xs">
+                      🗓 Proof stored until: {new Date(selectedWithdrawal.screenshotExpiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </p>
+                  )}
+                  <a href={selectedWithdrawal.paymentScreenshot.startsWith('http') ? selectedWithdrawal.paymentScreenshot : `http://localhost:5000${selectedWithdrawal.paymentScreenshot}`} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-green-400 text-sm underline">Open full image ↗</a>
+                </div>
+              )}
 
               {/* Admin Notes */}
               {selectedWithdrawal.status === 'pending' && (

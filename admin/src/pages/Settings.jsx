@@ -20,7 +20,11 @@ const Settings = () => {
     commissionRate: 5,
     referralBonus: 50,
     signupBonus: 50,
-    noticeBoard: ''
+    noticeBoard: '',
+    telegramGroup: '',
+    whatsappGroup: '',
+    ludoEnabled: true,
+    snakeLadderEnabled: true
   });
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -49,30 +53,26 @@ const Settings = () => {
       const adminStorage = localStorage.getItem('admin-storage');
       const token = adminStorage ? JSON.parse(adminStorage).state.token : null;
       
-      const [commissionRes, referralRes, signupRes, noticeRes] = await Promise.all([
-        axios.get('/config/commissionRate', {
-          baseURL: import.meta.env.VITE_API_URL,
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get('/config/referralBonus', {
-          baseURL: import.meta.env.VITE_API_URL,
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get('/config/signupBonus', {
-          baseURL: import.meta.env.VITE_API_URL,
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get('/config/noticeBoard', {
-          baseURL: import.meta.env.VITE_API_URL,
-          headers: { Authorization: `Bearer ${token}` }
-        })
+      const [commissionRes, referralRes, signupRes, noticeRes, telegramRes, whatsappRes, ludoRes, snakeLadderRes] = await Promise.all([
+        axios.get('/config/commissionRate', { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
+        axios.get('/config/referralBonus', { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
+        axios.get('/config/signupBonus', { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
+        axios.get('/config/noticeBoard', { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
+        axios.get('/config/telegramGroup', { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
+        axios.get('/config/whatsappGroup', { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
+        axios.get('/config/ludoEnabled', { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { data: { value: true } } })),
+        axios.get('/config/snakeLadderEnabled', { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { data: { value: true } } }))
       ]);
 
       setGameSettings({
         commissionRate: commissionRes.data.data?.value || 5,
         referralBonus: referralRes.data.data?.value || 50,
         signupBonus: signupRes.data.data?.value || 50,
-        noticeBoard: noticeRes.data.data?.value || ''
+        noticeBoard: noticeRes.data.data?.value || '',
+        telegramGroup: telegramRes.data.data?.value || '',
+        whatsappGroup: whatsappRes.data.data?.value || '',
+        ludoEnabled: ludoRes.data.data?.value !== false,
+        snakeLadderEnabled: snakeLadderRes.data.data?.value !== false
       });
     } catch (error) {
       console.error('Failed to fetch game settings');
@@ -169,7 +169,7 @@ const Settings = () => {
   };
 
   const handleGameChange = (key, value) => {
-    setGameSettings(prev => ({ ...prev, [key]: Number(value) }));
+    setGameSettings(prev => ({ ...prev, [key]: value }));
   };
 
   const handleSaveGameSettings = async () => {
@@ -179,58 +179,14 @@ const Settings = () => {
       const token = adminStorage ? JSON.parse(adminStorage).state.token : null;
 
       await Promise.all([
-        axios.put(
-          '/config',
-          {
-            key: 'commissionRate',
-            value: gameSettings.commissionRate,
-            description: 'Game commission rate in percentage',
-            category: 'game'
-          },
-          {
-            baseURL: import.meta.env.VITE_API_URL,
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        ),
-        axios.put(
-          '/config',
-          {
-            key: 'referralBonus',
-            value: gameSettings.referralBonus,
-            description: 'Referral bonus amount in rupees',
-            category: 'referral'
-          },
-          {
-            baseURL: import.meta.env.VITE_API_URL,
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        ),
-        axios.put(
-          '/config',
-          {
-            key: 'signupBonus',
-            value: gameSettings.signupBonus,
-            description: 'Signup bonus amount in rupees for new users',
-            category: 'referral'
-          },
-          {
-            baseURL: import.meta.env.VITE_API_URL,
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        ),
-        axios.put(
-          '/config',
-          {
-            key: 'noticeBoard',
-            value: gameSettings.noticeBoard,
-            description: 'Notice board text displayed on home page',
-            category: 'general'
-          },
-          {
-            baseURL: import.meta.env.VITE_API_URL,
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        )
+        axios.put('/config', { key: 'commissionRate', value: Number(gameSettings.commissionRate), description: 'Game commission rate in percentage', category: 'game' }, { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
+        axios.put('/config', { key: 'referralBonus', value: Number(gameSettings.referralBonus), description: 'Referral bonus amount in rupees', category: 'referral' }, { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
+        axios.put('/config', { key: 'signupBonus', value: Number(gameSettings.signupBonus), description: 'Signup bonus amount in rupees for new users', category: 'referral' }, { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
+        axios.put('/config', { key: 'noticeBoard', value: gameSettings.noticeBoard, description: 'Notice board text displayed on home page', category: 'general' }, { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
+        axios.put('/config', { key: 'telegramGroup', value: gameSettings.telegramGroup, description: 'Telegram group link for support', category: 'general' }, { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
+        axios.put('/config', { key: 'whatsappGroup', value: gameSettings.whatsappGroup, description: 'WhatsApp group link for support', category: 'general' }, { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
+        axios.put('/config', { key: 'ludoEnabled', value: gameSettings.ludoEnabled, description: 'Enable or disable Ludo game', category: 'game' }, { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
+        axios.put('/config', { key: 'snakeLadderEnabled', value: gameSettings.snakeLadderEnabled, description: 'Enable or disable Snake & Ladder game', category: 'game' }, { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } })
       ]);
 
       toast.success('Game settings saved successfully');
@@ -431,6 +387,75 @@ const Settings = () => {
               className="w-full bg-gray-700 text-white px-4 py-3 rounded-lg outline-none border border-gray-600 focus:border-purple-500 min-h-[100px]"
             />
             <p className="text-gray-500 text-xs mt-1">Text displayed in green notice box on home page</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+            <div>
+              <label className="block text-gray-400 text-sm mb-2 font-semibold">Telegram Group Link</label>
+              <input
+                type="text"
+                value={gameSettings.telegramGroup}
+                onChange={(e) => setGameSettings(prev => ({ ...prev, telegramGroup: e.target.value }))}
+                placeholder="https://t.me/yourgroup"
+                className="w-full bg-gray-700 text-white px-4 py-3 rounded-lg outline-none border border-gray-600 focus:border-purple-500"
+              />
+              <p className="text-gray-500 text-xs mt-1">Telegram link for the customer support page</p>
+            </div>
+            <div>
+              <label className="block text-gray-400 text-sm mb-2 font-semibold">WhatsApp Group Link</label>
+              <input
+                type="text"
+                value={gameSettings.whatsappGroup}
+                onChange={(e) => setGameSettings(prev => ({ ...prev, whatsappGroup: e.target.value }))}
+                placeholder="https://wa.me/yourgroup"
+                className="w-full bg-gray-700 text-white px-4 py-3 rounded-lg outline-none border border-gray-600 focus:border-purple-500"
+              />
+              <p className="text-gray-500 text-xs mt-1">WhatsApp link for the customer support page</p>
+            </div>
+          </div>
+
+          {/* Game Enable/Disable Toggles */}
+          <div>
+            <label className="block text-gray-400 text-sm mb-3 font-semibold">Game Availability</label>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="flex items-center justify-between bg-gray-700 rounded-lg p-4 border border-gray-600">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🎲</span>
+                  <div>
+                    <p className="text-white font-semibold">Ludo Game</p>
+                    <p className="text-gray-400 text-xs">Enable or disable Ludo battles</p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={gameSettings.ludoEnabled}
+                    onChange={(e) => handleGameChange('ludoEnabled', e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-between bg-gray-700 rounded-lg p-4 border border-gray-600">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🐍</span>
+                  <div>
+                    <p className="text-white font-semibold">Snake & Ladder</p>
+                    <p className="text-gray-400 text-xs">Enable or disable S&L battles</p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={gameSettings.snakeLadderEnabled}
+                    onChange={(e) => handleGameChange('snakeLadderEnabled', e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                </label>
+              </div>
+            </div>
           </div>
 
           <button
