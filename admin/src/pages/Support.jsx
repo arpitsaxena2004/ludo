@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { FaHeadset, FaReply, FaCheck, FaClock, FaCheckCircle, FaTimesCircle, FaSearch, FaUser, FaSpinner, FaPaperPlane } from 'react-icons/fa';
+import { FaHeadset, FaReply, FaCheck, FaClock, FaCheckCircle, FaTimesCircle, FaSearch, FaUser, FaSpinner, FaPaperPlane, FaWhatsapp, FaSave } from 'react-icons/fa';
 import { adminAPI } from '../services/api';
+import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const Support = () => {
@@ -13,13 +14,56 @@ const Support = () => {
   const [reply, setReply] = useState('');
   const [sending, setSending] = useState(false);
 
+  // WhatsApp Config State
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [savingConfig, setSavingConfig] = useState(false);
+
   useEffect(() => {
     fetchTickets();
+    fetchWhatsappConfig();
   }, [filter]);
 
   useEffect(() => {
     filterTickets();
   }, [tickets, searchTerm]);
+
+  const fetchWhatsappConfig = async () => {
+    try {
+      const adminStorage = localStorage.getItem('admin-storage');
+      const token = adminStorage ? JSON.parse(adminStorage).state.token : null;
+      const response = await axios.get('/config/whatsappSupportNumber', {
+        baseURL: import.meta.env.VITE_API_URL,
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data && response.data.data) {
+        setWhatsappNumber(response.data.data.value || '');
+      }
+    } catch (error) {
+      console.error('Failed to fetch whatsapp config');
+    }
+  };
+
+  const handleSaveWhatsappConfig = async () => {
+    setSavingConfig(true);
+    try {
+      const adminStorage = localStorage.getItem('admin-storage');
+      const token = adminStorage ? JSON.parse(adminStorage).state.token : null;
+      await axios.put('/config', {
+        key: 'whatsappSupportNumber',
+        value: whatsappNumber,
+        description: 'WhatsApp number with country code for the 24/7 floating button',
+        category: 'general'
+      }, {
+        baseURL: import.meta.env.VITE_API_URL,
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('WhatsApp support number saved! ✅');
+    } catch (error) {
+      toast.error('Failed to save WhatsApp number');
+    } finally {
+      setSavingConfig(false);
+    }
+  };
 
   const fetchTickets = async () => {
     try {
@@ -147,6 +191,31 @@ const Support = () => {
 
       {/* Filters & Search */}
       <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 mb-6">
+        {/* Support Settings Section */}
+        <div className="flex flex-col md:flex-row md:items-end gap-3 mb-4 pb-4 border-b border-gray-700">
+          <div className="flex-1">
+            <label className="block text-gray-400 text-sm mb-1 font-semibold flex items-center gap-2">
+              <FaWhatsapp className="text-green-500" /> WhatsApp Support Number
+            </label>
+            <input
+              type="text"
+              value={whatsappNumber}
+              onChange={(e) => setWhatsappNumber(e.target.value)}
+              placeholder="e.g. +919024608772"
+              className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg outline-none border border-gray-600 focus:border-blue-500"
+            />
+            <p className="text-gray-500 text-xs mt-1">This number will be connected to the Floating 24/7 Support icon on the user website.</p>
+          </div>
+          <button
+            onClick={handleSaveWhatsappConfig}
+            disabled={savingConfig}
+            className="flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+          >
+            <FaSave />
+            {savingConfig ? 'Saving...' : 'Save Config'}
+          </button>
+        </div>
+
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1 relative">
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />

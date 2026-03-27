@@ -23,6 +23,10 @@ const Users = () => {
   const [fundReason, setFundReason] = useState('');
   const [fundLoading, setFundLoading] = useState(false);
 
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
+  const [resetPasswordValue, setResetPasswordValue] = useState('');
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -129,6 +133,25 @@ const Users = () => {
       toast.error(error.response?.data?.message || `Failed to ${fundAction} funds`);
     } finally {
       setFundLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetPasswordValue || resetPasswordValue.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+
+    setResetPasswordLoading(true);
+    try {
+      await adminAPI.resetUserPassword(selectedUser._id, resetPasswordValue);
+      toast.success('Password reset successfully');
+      setShowResetPasswordModal(false);
+      setResetPasswordValue('');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to reset password');
+    } finally {
+      setResetPasswordLoading(false);
     }
   };
 
@@ -576,6 +599,14 @@ const Users = () => {
                   </button>
                 )}
                 <button
+                  onClick={() => setShowResetPasswordModal(true)}
+                  disabled={actionLoading}
+                  className="flex-1 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <FaUnlock />
+                  Reset Password
+                </button>
+                <button
                   onClick={() => setShowDeleteModal(selectedUser)}
                   disabled={actionLoading}
                   className="flex-1 bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
@@ -697,6 +728,53 @@ const Users = () => {
                 >
                   {fundLoading ? <FaSpinner className="animate-spin" /> : null}
                   {fundAction === 'add' ? 'Add Funds' : 'Deduct Funds'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Modal */}
+      {showResetPasswordModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setShowResetPasswordModal(false)}>
+          <div className="bg-gray-800 rounded-2xl w-full max-w-md border border-gray-700 p-6" onClick={e => e.stopPropagation()}>
+            <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+              <FaUnlock className="text-purple-400" />
+              Reset Password
+            </h3>
+            <p className="text-gray-400 mb-4">
+              Resetting password for <span className="text-white font-semibold">{selectedUser.username || selectedUser.phoneNumber}</span>
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">New Password</label>
+                <input
+                  type="text"
+                  value={resetPasswordValue}
+                  onChange={(e) => setResetPasswordValue(e.target.value)}
+                  placeholder="Enter new password (min 6 chars)"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500"
+                  minLength={6}
+                />
+              </div>
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowResetPasswordModal(false);
+                    setResetPasswordValue('');
+                  }}
+                  className="flex-1 bg-gray-700 text-white py-3 rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleResetPassword}
+                  disabled={resetPasswordLoading || resetPasswordValue.length < 6}
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {resetPasswordLoading ? <FaSpinner className="animate-spin" /> : null}
+                  Reset Password
                 </button>
               </div>
             </div>

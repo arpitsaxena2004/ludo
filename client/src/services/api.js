@@ -49,6 +49,8 @@ export const authAPI = {
     api.post('/auth/register', { phoneNumber, password, referralCode }),
   login: (phoneNumber, password) => 
     api.post('/auth/login', { phoneNumber, password }),
+  forgotPassword: (phoneNumber) =>
+    api.post('/auth/forgot-password', { phoneNumber }),
   getMe: () => api.get('/auth/me'),
   logout: () => api.post('/auth/logout'),
 };

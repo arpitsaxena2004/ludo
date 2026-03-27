@@ -23,6 +23,11 @@ const Login = () => {
   const [showBlockedModal, setShowBlockedModal] = useState(searchParams.get('blocked') === 'true');
   const [signupBonus, setSignupBonus] = useState(50);
 
+  // Forgot password state
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotPhone, setForgotPhone] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+
   // Fetch signup bonus from config
   useEffect(() => {
     const fetchSignupBonus = async () => {
@@ -68,6 +73,43 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleWhatsappReset = () => {
+    if (forgotPhone.length < 10) {
+      toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+    const message = encodeURIComponent(`Hello Admin,\n\nI want to reset my password.\nMy registered mobile number is: +91${forgotPhone}`);
+    
+    // Check if link is a direct number or a group link
+    let finalLink = whatsappLink;
+    if (whatsappLink.includes('wa.me')) {
+      const separator = whatsappLink.includes('?') ? '&' : '?';
+      finalLink = `${whatsappLink}${separator}text=${message}`;
+    }
+    window.open(finalLink, '_blank');
+    setShowForgotModal(false);
+    setForgotPhone('');
+  };
+
+  const handleTelegramReset = () => {
+    if (forgotPhone.length < 10) {
+      toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+    // Telegram does not support pre-filled message via URL directly into groups, 
+    // but we standardly just redirect them to the group so they can paste it.
+    // However, for standard bots/users: t.me/username?text=Message
+    const message = encodeURIComponent(`Hello Admin,\n\nI want to reset my password.\nMy registered mobile number is: +91${forgotPhone}`);
+    
+    let finalLink = telegramLink;
+    if (telegramLink.includes('t.me') && !telegramLink.includes('joinchat')) {
+       finalLink = `${telegramLink}?text=${message}`;
+    }
+    window.open(finalLink, '_blank');
+    setShowForgotModal(false);
+    setForgotPhone('');
   };
 
   const handleRegister = async (e) => {
@@ -211,11 +253,23 @@ const Login = () => {
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800 transition-colors"
                 >
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
-                </button>
-              </div>
-            </div>
+                    </button>
+                  </div>
+                </div>
 
-            {!isLogin && (
+                {isLogin && (
+                  <div className="mb-4 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotModal(true)}
+                      className="text-orange-500 hover:text-orange-600 text-sm font-semibold transition-colors"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                )}
+
+                {!isLogin && (
               <>
                 <div className="mb-4">
                   <label className="block text-gray-700 mb-2 font-medium text-sm">
@@ -318,6 +372,74 @@ const Login = () => {
                   className="w-full bg-red-700 text-white font-bold py-3 rounded-xl hover:bg-red-600 transition-colors"
                 >
                   Close
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-3xl p-6 w-full max-w-md border-2 border-orange-500 shadow-2xl"
+          >
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-black text-gray-800 mb-2">Reset Password</h3>
+              <p className="text-gray-600">
+                Enter your mobile number and select a support channel to request a password reset.
+              </p>
+            </div>
+            <div>
+              <div className="mb-6">
+                <label className="block text-gray-700 mb-2 font-medium text-sm">
+                  Mobile Number
+                </label>
+                <div className="flex items-center bg-gray-50 rounded-xl overflow-hidden border-2 border-gray-300 focus-within:border-orange-500 transition-colors">
+                  <span className="px-4 text-gray-700 font-semibold">+91</span>
+                  <input
+                    type="tel"
+                    value={forgotPhone}
+                    onChange={(e) => setForgotPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="Enter 10-digit number"
+                    className="flex-1 bg-transparent px-4 py-4 text-gray-800 outline-none placeholder-gray-400"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="grid gap-3">
+                <button
+                  type="button"
+                  onClick={handleWhatsappReset}
+                  className="w-full bg-[#25D366] text-white font-bold py-3 px-4 rounded-xl hover:bg-[#128C7E] transition-all flex items-center justify-center gap-2"
+                >
+                  <FaWhatsapp className="text-xl" />
+                  Request via WhatsApp
+                </button>
+                <button
+                  type="button"
+                  onClick={handleTelegramReset}
+                  className="w-full bg-[#0088cc] text-white font-bold py-3 px-4 rounded-xl hover:bg-[#006699] transition-all flex items-center justify-center gap-2"
+                >
+                  <FaTelegramPlane className="text-xl" />
+                  Request via Telegram
+                </button>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForgotModal(false);
+                    setForgotPhone('');
+                  }}
+                  className="w-full bg-gray-100 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
                 </button>
               </div>
             </div>

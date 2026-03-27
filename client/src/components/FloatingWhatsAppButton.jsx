@@ -1,9 +1,30 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaWhatsapp } from 'react-icons/fa';
 import { useLocation } from 'react-router-dom';
+import axios from 'axios';
 
 const FloatingWhatsAppButton = () => {
   const location = useLocation();
+  const [whatsappNumber, setWhatsappNumber] = useState('919024608772');
+
+  useEffect(() => {
+    const fetchSupportNumber = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/config/public/whatsappSupportNumber`);
+        if (response.data?.success && response.data?.data?.value) {
+          // Strip non-digits to ensure proper wa.me formatting regardless of user input style
+          const formattedNumber = response.data.data.value.replace(/\D/g, '');
+          if (formattedNumber) {
+            setWhatsappNumber(formattedNumber);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch whatsapp support number:', error);
+      }
+    };
+    fetchSupportNumber();
+  }, []);
   
   // Hide on BattleRoom page (when user clicks Ludo Classic and enters game)
   const shouldHide = location.pathname.startsWith('/battle-room');
@@ -13,7 +34,7 @@ const FloatingWhatsAppButton = () => {
   return (
     <div className="fixed bottom-24 left-0 right-0 z-50 w-full max-w-md mx-auto flex justify-end pr-4 pointer-events-none">
       <motion.a
-        href="https://wa.me/919024608772"
+        href={`https://wa.me/${whatsappNumber}`}
         target="_blank"
         rel="noopener noreferrer"
         initial={{ scale: 0 }}

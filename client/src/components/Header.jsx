@@ -2,13 +2,17 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaBars, FaWallet, FaGift, FaChevronRight, FaUser, FaGamepad, FaHistory, FaHeadset, FaFileAlt, FaArrowLeft, FaArrowDown, FaArrowUp } from 'react-icons/fa';
+import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
+import usePWA from '../hooks/usePWA';
 
 const Header = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [policyOpen, setPolicyOpen] = useState(false);
+  
+  const { isInstallable, handleInstallClick } = usePWA();
 
   const handleMenuItemClick = (path) => {
     setMenuOpen(false);
@@ -175,8 +179,6 @@ const Header = () => {
                   <FaChevronRight className="text-gray-600" />
                 </button>
 
-                
-
                 {/* All Policy */}
                 <button
                   onClick={() => setPolicyOpen(!policyOpen)}
@@ -237,6 +239,26 @@ const Header = () => {
                     </motion.div>
                   )}
                 </AnimatePresence>
+
+                {/* Install App Button */}
+                <button
+                  onClick={() => {
+                    if (isInstallable) {
+                      handleInstallClick();
+                    } else {
+                      toast.success(
+                        "To install: \n🍏 iOS: Tap 'Share' then 'Add to Home Screen'\n🤖 Android: Tap browser menu then 'Install App'",
+                        { duration: 6000 }
+                      );
+                    }
+                  }}
+                  className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-2xl p-4 flex items-center justify-between transition-all shadow-md mt-4"
+                >
+                  <div className="flex items-center gap-3">
+                    <FaArrowDown className="text-white text-2xl" />
+                    <span className="text-white font-bold text-lg">Download App</span>
+                  </div>
+                </button>
 
                 {/* Back */}
                 <button

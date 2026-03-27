@@ -65,7 +65,8 @@ const Games = () => {
       completed: 'bg-green-500/20 text-green-400 border-green-500/30',
       in_progress: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
       waiting: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-      cancelled: 'bg-red-500/20 text-red-400 border-red-500/30'
+      cancelled: 'bg-red-500/20 text-red-400 border-red-500/30',
+      disputed: 'bg-orange-500/20 text-orange-400 border-orange-500/30 font-black animate-pulse'
     };
     return colors[status] || 'bg-gray-500/20 text-gray-400 border-gray-500/30';
   };
@@ -75,7 +76,8 @@ const Games = () => {
       completed: '✓',
       in_progress: '▶',
       waiting: '⏳',
-      cancelled: '✕'
+      cancelled: '✕',
+      disputed: '⚠️'
     };
     return icons[status] || '•';
   };
@@ -91,6 +93,7 @@ const Games = () => {
     completed: games.filter(g => g.status === 'completed').length,
     inProgress: games.filter(g => g.status === 'in_progress').length,
     waiting: games.filter(g => g.status === 'waiting').length,
+    disputed: games.filter(g => g.status === 'disputed').length,
   };
 
   return (
@@ -131,6 +134,13 @@ const Games = () => {
           </div>
           <p className="text-white text-2xl lg:text-3xl font-bold">{stats.waiting}</p>
         </div>
+        <div className="bg-gradient-to-br from-orange-600/20 to-orange-800/20 border border-orange-500/30 rounded-xl p-4 lg:p-6 col-span-2 lg:col-span-1">
+          <div className="flex items-center gap-3 mb-2">
+            <FaCheckCircle className="text-orange-400 text-xl" />
+            <p className="text-orange-400 text-sm">Disputed</p>
+          </div>
+          <p className="text-white text-2xl lg:text-3xl font-bold">{stats.disputed}</p>
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-4">
@@ -146,7 +156,7 @@ const Games = () => {
         </div>
         <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0">
           <FaFilter className="text-gray-400 flex-shrink-0" />
-          {['all', 'waiting', 'in_progress', 'completed', 'cancelled'].map((f) => (
+          {['all', 'waiting', 'in_progress', 'disputed', 'completed', 'cancelled'].map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}

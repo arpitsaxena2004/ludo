@@ -24,6 +24,9 @@ const BattleRoom = () => {
   const [hasSubmittedResult, setHasSubmittedResult] = useState(false);
   const fileInputRef = useRef(null);
 
+  // Language toggle for instructions
+  const [instructLang, setInstructLang] = useState('hi'); // 'en' or 'hi'
+
   const [showWinCelebration, setShowWinCelebration] = useState(false);
 
   useEffect(() => {
@@ -275,10 +278,29 @@ const BattleRoom = () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-2xl p-6 mb-4 shadow-xl border-2 border-gray-300"
+          className="bg-white rounded-2xl p-6 mb-4 shadow-xl border-2 border-gray-300 relative"
         >
-          <p className="text-center text-gray-700 text-sm mb-2 font-semibold">
-            कृपया लूडो किंग से कोड अपलोड करें
+          {/* Language Toggle */}
+          <div className="absolute top-4 right-4 flex bg-gray-100 rounded-lg p-1 border border-gray-200">
+             <button
+                onClick={() => setInstructLang('en')}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${instructLang === 'en' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}
+             >
+               English
+             </button>
+             <button
+                onClick={() => setInstructLang('hi')}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${instructLang === 'hi' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}
+             >
+               हिन्दी
+             </button>
+          </div>
+
+          <p className="text-center text-gray-700 text-sm mb-2 font-semibold px-4 pt-6">
+            {isCreator 
+              ? (instructLang === 'hi' ? 'कृपया लूडो किंग से रूम कोड कॉपी करें और नीचे दर्ज करें' : 'Please copy the room code from Ludo King and enter it below')
+              : (instructLang === 'hi' ? 'कृपया लूडो गेम शुरू होने का इंतज़ार करें...' : 'Please wait for the creator to share the Ludo room code...')
+            }
           </p>
           <p className="text-center text-yellow-600 font-bold text-lg mb-4">
             Time left:- {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')} Min

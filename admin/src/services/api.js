@@ -45,6 +45,7 @@ export const adminAPI = {
   getUserById: (id) => api.get(`/admin/user/${id}`),
   blockUser: (id) => api.put(`/admin/user/${id}/block`),
   unblockUser: (id) => api.put(`/admin/user/${id}/unblock`),
+  resetUserPassword: (id, newPassword) => api.put(`/admin/user/${id}/reset-password`, { newPassword }),
   addFunds: (userId, amount, type, reason) =>
     api.post(`/admin/users/${userId}/add-funds`, { amount, type, reason }),
   deductFunds: (userId, amount, type, reason) =>
