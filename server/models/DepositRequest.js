@@ -13,12 +13,29 @@ const depositRequestSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['upi'],
-    default: 'upi'
+    enum: ['upi', 'gateway'],
+    default: 'gateway'
+  },
+  orderId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  gatewayOrderId: {
+    type: String,
+    default: ''
+  },
+  paymentUrl: {
+    type: String,
+    default: ''
+  },
+  utr: {
+    type: String,
+    default: ''
   },
   screenshot: {
     type: String,
-    required: true
+    default: ''
   },
   upiTransactionId: {
     type: String,
@@ -26,7 +43,7 @@ const depositRequestSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'approved', 'rejected'],
+    enum: ['pending', 'approved', 'rejected', 'processing'],
     default: 'pending'
   },
   adminNotes: {

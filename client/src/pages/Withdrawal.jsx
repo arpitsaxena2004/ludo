@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaWallet, FaHistory, FaInfoCircle, FaCheckCircle } from 'react-icons/fa';
+import { FaWallet, FaHistory, FaInfoCircle, FaCheckCircle, FaQrcode, FaUniversity } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import useAuthStore from '../store/authStore';
@@ -11,20 +11,18 @@ const Withdrawal = () => {
   const { user, fetchUser } = useAuthStore();
   const [paymentSettings, setPaymentSettings] = useState(null);
   const [amount, setAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('upi');
-  const [withdrawalDetails, setWithdrawalDetails] = useState({
-    upiId: '',
-    phoneNumber: '',
-    accountHolderName: '',
-    accountNumber: '',
-    ifscCode: '',
-    bankName: ''
-  });
+  const [selectedAccount, setSelectedAccount] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchPaymentSettings();
-  }, []);
+    // Auto-select first available account
+    if (user?.upiId) {
+      setSelectedAccount('upi');
+    } else if (user?.bankDetails?.accountNumber) {
+      setSelectedAccount('bank');
+    }
+  }, [user]);
 
   const fetchPaymentSettings = async () => {
     try {
@@ -37,18 +35,16 @@ const Withdrawal = () => {
     }
   };
 
-  const handleInputChange = (e) => {
-    setWithdrawalDetails({
-      ...withdrawalDetails,
-      [e.target.name]: e.target.value
-    });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!paymentSettings?.isWithdrawalEnabled) {
       toast.error('Withdrawals are currently disabled');
+      return;
+    }
+
+    if (!selectedAccount) {
+      toast.error('Please select a payment account');
       return;
     }
 
@@ -64,23 +60,37 @@ const Withdrawal = () => {
       return;
     }
 
-    if (['upi', 'phonepe', 'googlepay', 'paytm'].includes(paymentMethod)) {
-      if (!withdrawalDetails.upiId && !withdrawalDetails.phoneNumber) {
-        toast.error('Please provide UPI ID or Phone Number');
+    // Prepare withdrawal details based on selected account
+    let paymentMethod = 'upi';
+    let withdrawalDetails = {};
+    
+    if (selectedAccount === 'upi') {
+      if (!user?.upiId) {
+        toast.error('UPI ID not found. Please add it in your profile.');
         return;
       }
-    } else if (paymentMethod === 'bank') {
-      if (!withdrawalDetails.accountHolderName || !withdrawalDetails.accountNumber || !withdrawalDetails.ifscCode) {
-        toast.error('Please provide complete bank details');
+      paymentMethod = 'upi';
+      withdrawalDetails = { upiId: user.upiId };
+    } else if (selectedAccount === 'bank') {
+      if (!user?.bankDetails?.accountNumber || !user?.bankDetails?.ifscCode) {
+        toast.error('Bank details not found. Please add them in your profile.');
         return;
       }
+      paymentMethod = 'bank';
+      withdrawalDetails = {
+        accountHolderName: user.bankDetails.accountHolderName,
+        accountNumber: user.bankDetails.accountNumber,
+        ifscCode: user.bankDetails.ifscCode,
+        bankName: user.bankDetails.bankName
+      };
     }
 
     setLoading(true);
     try {
       const authStorage = localStorage.getItem('auth-storage');
       const token = authStorage ? JSON.parse(authStorage).state.token : null;
-      await axios.post(
+      
+      const response = await axios.post(
         '/payment/withdrawal',
         {
           amount: withdrawAmount,
@@ -93,24 +103,30 @@ const Withdrawal = () => {
         }
       );
 
-      toast.success('Withdrawal request submitted! 🎉', {
-        duration: 4000,
-        icon: '✅'
-      });
-      setAmount('');
-      setWithdrawalDetails({
-        upiId: '',
-        phoneNumber: '',
-        accountHolderName: '',
-        accountNumber: '',
-        ifscCode: '',
-        bankName: ''
-      });
-      fetchUser();
-      
-      setTimeout(() => navigate('/payment-history'), 1500);
+      if (response.data.success) {
+        // Immediately update the UI with reduced balance
+        const updatedUser = {
+          ...user,
+          winningCash: user.winningCash - withdrawAmount
+        };
+        useAuthStore.setState({ user: updatedUser });
+        
+        toast.success('Withdrawal request submitted! 🎉', {
+          duration: 4000,
+          icon: '✅'
+        });
+        setAmount('');
+        setSelectedAccount('');
+        
+        // Fetch fresh user data from server
+        await fetchUser();
+        
+        setTimeout(() => navigate('/payment-history'), 1500);
+      }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to submit withdrawal request');
+      console.error('Withdrawal error:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to submit withdrawal request';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -218,104 +234,88 @@ const Withdrawal = () => {
           </div>
 
           <div>
-            <label className="block text-gray-300 text-sm font-semibold mb-3">Payment Method</label>
-            <select
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-              className="w-full px-5 py-4 bg-gray-700/50 border-2 border-gray-600 rounded-2xl text-white font-semibold focus:outline-none focus:border-blue-500 transition-all"
-            >
-              <option value="upi">UPI</option>
-              <option value="phonepe">PhonePe</option>
-              <option value="googlepay">Google Pay</option>
-              <option value="paytm">Paytm</option>
-              <option value="bank">Bank Transfer</option>
-            </select>
+            <label className="block text-gray-300 text-sm font-semibold mb-3">Select Payment Account</label>
+            
+            {/* Check if user has any saved accounts */}
+            {!user?.upiId && !user?.bankDetails?.accountNumber ? (
+              <div className="bg-yellow-500/10 border-2 border-yellow-500 rounded-2xl p-6 text-center">
+                <FaInfoCircle className="text-4xl text-yellow-400 mx-auto mb-3" />
+                <p className="text-yellow-400 font-semibold mb-3">No payment accounts found!</p>
+                <p className="text-gray-300 text-sm mb-4">Please add your UPI ID or Bank details in your profile to withdraw money.</p>
+                <Link 
+                  to="/profile"
+                  className="inline-block bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-600 transition-all"
+                >
+                  Go to Profile
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* UPI Account Option */}
+                {user?.upiId && (
+                  <div
+                    onClick={() => setSelectedAccount('upi')}
+                    className={`cursor-pointer bg-gray-700/50 border-2 rounded-2xl p-4 transition-all ${
+                      selectedAccount === 'upi'
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : 'border-gray-600 hover:border-gray-500'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                        selectedAccount === 'upi' ? 'bg-blue-500' : 'bg-purple-500'
+                      }`}>
+                        <FaQrcode className="text-white text-xl" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-white font-bold text-lg">UPI Account</p>
+                        <p className="text-gray-400 text-sm font-mono">{user.upiId}</p>
+                      </div>
+                      {selectedAccount === 'upi' && (
+                        <FaCheckCircle className="text-blue-500 text-2xl" />
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Bank Account Option */}
+                {user?.bankDetails?.accountNumber && (
+                  <div
+                    onClick={() => setSelectedAccount('bank')}
+                    className={`cursor-pointer bg-gray-700/50 border-2 rounded-2xl p-4 transition-all ${
+                      selectedAccount === 'bank'
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : 'border-gray-600 hover:border-gray-500'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                        selectedAccount === 'bank' ? 'bg-blue-500' : 'bg-green-500'
+                      }`}>
+                        <FaUniversity className="text-white text-xl" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-white font-bold text-lg">Bank Account</p>
+                        <p className="text-gray-400 text-sm">{user.bankDetails.accountHolderName}</p>
+                        <p className="text-gray-400 text-xs font-mono">A/C: {user.bankDetails.accountNumber}</p>
+                        <p className="text-gray-400 text-xs font-mono">
+                          {user.bankDetails.ifscCode}
+                          {user.bankDetails.bankName && ` | ${user.bankDetails.bankName}`}
+                        </p>
+                      </div>
+                      {selectedAccount === 'bank' && (
+                        <FaCheckCircle className="text-blue-500 text-2xl" />
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-
-          {['upi', 'phonepe', 'googlepay', 'paytm'].includes(paymentMethod) && (
-            <>
-              <div>
-                <label className="block text-gray-300 text-sm font-semibold mb-3">UPI ID</label>
-                <input
-                  type="text"
-                  name="upiId"
-                  value={withdrawalDetails.upiId}
-                  onChange={handleInputChange}
-                  placeholder="yourname@upi"
-                  className="w-full px-5 py-4 bg-gray-700/50 border-2 border-gray-600 rounded-2xl text-white focus:outline-none focus:border-blue-500 transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-300 text-sm font-semibold mb-3">Phone Number (Alternative)</label>
-                <input
-                  type="tel"
-                  name="phoneNumber"
-                  value={withdrawalDetails.phoneNumber}
-                  onChange={handleInputChange}
-                  placeholder="10-digit mobile number"
-                  className="w-full px-5 py-4 bg-gray-700/50 border-2 border-gray-600 rounded-2xl text-white focus:outline-none focus:border-blue-500 transition-all"
-                />
-              </div>
-            </>
-          )}
-
-          {paymentMethod === 'bank' && (
-            <>
-              <div>
-                <label className="block text-gray-300 text-sm font-semibold mb-3">Account Holder Name *</label>
-                <input
-                  type="text"
-                  name="accountHolderName"
-                  value={withdrawalDetails.accountHolderName}
-                  onChange={handleInputChange}
-                  placeholder="As per bank records"
-                  className="w-full px-5 py-4 bg-gray-700/50 border-2 border-gray-600 rounded-2xl text-white focus:outline-none focus:border-blue-500 transition-all"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-gray-300 text-sm font-semibold mb-3">Account Number *</label>
-                <input
-                  type="text"
-                  name="accountNumber"
-                  value={withdrawalDetails.accountNumber}
-                  onChange={handleInputChange}
-                  placeholder="Bank account number"
-                  className="w-full px-5 py-4 bg-gray-700/50 border-2 border-gray-600 rounded-2xl text-white focus:outline-none focus:border-blue-500 transition-all"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-gray-300 text-sm font-semibold mb-3">IFSC Code *</label>
-                <input
-                  type="text"
-                  name="ifscCode"
-                  value={withdrawalDetails.ifscCode}
-                  onChange={handleInputChange}
-                  placeholder="11-character IFSC code"
-                  className="w-full px-5 py-4 bg-gray-700/50 border-2 border-gray-600 rounded-2xl text-white focus:outline-none focus:border-blue-500 transition-all"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-gray-300 text-sm font-semibold mb-3">Bank Name</label>
-                <input
-                  type="text"
-                  name="bankName"
-                  value={withdrawalDetails.bankName}
-                  onChange={handleInputChange}
-                  placeholder="Name of your bank"
-                  className="w-full px-5 py-4 bg-gray-700/50 border-2 border-gray-600 rounded-2xl text-white focus:outline-none focus:border-blue-500 transition-all"
-                />
-              </div>
-            </>
-          )}
-
-          
 
           <button
             type="submit"
-            disabled={loading || !paymentSettings.isWithdrawalEnabled || (user?.winningCash || 0) < paymentSettings.minWithdrawal}
+            disabled={loading || !paymentSettings.isWithdrawalEnabled || (user?.winningCash || 0) < paymentSettings.minWithdrawal || !selectedAccount}
             className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-5 rounded-2xl font-black text-lg hover:from-blue-600 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl transition-all transform hover:scale-105"
           >
             {loading ? (

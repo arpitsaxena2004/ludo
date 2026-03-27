@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Home from './pages/Home';
 import Wallet from './pages/Wallet';
 import Deposit from './pages/Deposit';
+import PaymentSuccess from './pages/PaymentSuccess';
 import Withdrawal from './pages/Withdrawal';
 import PaymentHistory from './pages/PaymentHistory';
 import Refer from './pages/Refer';
@@ -60,11 +61,13 @@ function App() {
       
       <Routes>
         <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/" />} />
+        <Route path="/signup" element={!isAuthenticated ? <Login /> : <Navigate to="/" />} />
         
         <Route element={<Layout />}>
           <Route path="/" element={isAuthenticated ? <Home /> : <Navigate to="/login" />} />
           <Route path="/wallet" element={isAuthenticated ? <Wallet /> : <Navigate to="/login" />} />
           <Route path="/deposit" element={isAuthenticated ? <Deposit /> : <Navigate to="/login" />} />
+          <Route path="/payment-success" element={isAuthenticated ? <PaymentSuccess /> : <Navigate to="/login" />} />
           <Route path="/withdrawal" element={isAuthenticated ? <Withdrawal /> : <Navigate to="/login" />} />
           <Route path="/payment-history" element={isAuthenticated ? <PaymentHistory /> : <Navigate to="/login" />} />
           <Route path="/refer" element={isAuthenticated ? <Refer /> : <Navigate to="/login" />} />

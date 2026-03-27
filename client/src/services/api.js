@@ -45,8 +45,8 @@ api.interceptors.response.use(
 
 // Auth APIs
 export const authAPI = {
-  register: (phoneNumber, password, referralCode) => 
-    api.post('/auth/register', { phoneNumber, password, referralCode }),
+  register: (phoneNumber, password, referralCode, username) => 
+    api.post('/auth/register', { phoneNumber, password, referralCode, username }),
   login: (phoneNumber, password) => 
     api.post('/auth/login', { phoneNumber, password }),
   forgotPassword: (phoneNumber) =>

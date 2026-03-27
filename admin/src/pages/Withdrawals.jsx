@@ -439,20 +439,43 @@ const Withdrawals = () => {
               {/* Show stored proof for approved withdrawals */}
               {selectedWithdrawal.status === 'approved' && selectedWithdrawal.paymentScreenshot && (
                 <div className="bg-green-500/10 border border-green-500 rounded-xl p-4">
-                  <h3 className="text-green-400 font-bold mb-2 flex items-center gap-2">
+                  <h3 className="text-green-400 font-bold mb-3 flex items-center gap-2">
                     <FaImage /> Payment Proof
                   </h3>
-                  <img 
-                    src={selectedWithdrawal.paymentScreenshot.startsWith('http') ? selectedWithdrawal.paymentScreenshot : `http://localhost:5000${selectedWithdrawal.paymentScreenshot}`} 
-                    alt="Payment Proof" 
-                    className="w-full max-h-64 object-contain rounded-lg border border-gray-600 bg-gray-900 mb-2" 
-                  />
+                  <div className="bg-gray-900 rounded-lg p-2 mb-3">
+                    <img 
+                      src={selectedWithdrawal.paymentScreenshot.startsWith('http') 
+                        ? selectedWithdrawal.paymentScreenshot 
+                        : `${import.meta.env.VITE_API_URL.replace('/api', '')}${selectedWithdrawal.paymentScreenshot}`
+                      } 
+                      alt="Payment Proof" 
+                      className="w-full max-h-96 object-contain rounded-lg" 
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'block';
+                      }}
+                    />
+                    <div style={{ display: 'none' }} className="text-center py-8 text-gray-400">
+                      <FaImage className="text-4xl mx-auto mb-2" />
+                      <p>Failed to load image</p>
+                    </div>
+                  </div>
                   {selectedWithdrawal.screenshotExpiresAt && (
-                    <p className="text-gray-400 text-xs">
+                    <p className="text-gray-400 text-xs mb-2">
                       🗓 Proof stored until: {new Date(selectedWithdrawal.screenshotExpiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </p>
                   )}
-                  <a href={selectedWithdrawal.paymentScreenshot.startsWith('http') ? selectedWithdrawal.paymentScreenshot : `http://localhost:5000${selectedWithdrawal.paymentScreenshot}`} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-green-400 text-sm underline">Open full image ↗</a>
+                  <a 
+                    href={selectedWithdrawal.paymentScreenshot.startsWith('http') 
+                      ? selectedWithdrawal.paymentScreenshot 
+                      : `${import.meta.env.VITE_API_URL.replace('/api', '')}${selectedWithdrawal.paymentScreenshot}`
+                    } 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="inline-flex items-center gap-2 text-green-400 text-sm hover:text-green-300 underline"
+                  >
+                    Open full image ↗
+                  </a>
                 </div>
               )}
 

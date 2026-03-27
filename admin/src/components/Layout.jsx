@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
-  FaHome, FaUsers, FaMoneyBill, FaGamepad, FaIdCard, FaHeadset, 
+  FaHome, FaUsers, FaGamepad, 
   FaCog, FaSignOutAlt, FaBars, FaTimes, FaChevronDown, FaFileAlt, FaSlidersH,
   FaDownload, FaUpload, FaChartLine, FaUserShield
 } from 'react-icons/fa';
@@ -34,7 +34,6 @@ const Layout = () => {
     { path: '/deposits', icon: FaDownload, label: 'Deposits', permission: 'manage_deposits' },
     { path: '/withdrawals', icon: FaUpload, label: 'Withdrawals', permission: 'manage_withdrawals' },
     { path: '/games', icon: FaGamepad, label: 'Games', permission: 'manage_games' },
-    { path: '/support', icon: FaHeadset, label: 'Support', permission: 'manage_support' },
     { path: '/reports', icon: FaChartLine, label: 'Reports', permission: 'view_analytics' },
     { path: '/sub-admins', icon: FaUserShield, label: 'Sub-Admins', permission: 'manage_admins' },
   ].filter(item => !item.permission || hasPermission(item.permission));
@@ -45,7 +44,7 @@ const Layout = () => {
   ].filter(item => !item.permission || hasPermission(item.permission));
 
   const bottomNavItems = navItems.filter(item => 
-    ['/','/ users', '/deposits', '/withdrawals', '/support'].includes(item.path)
+    ['/', '/users', '/deposits', '/withdrawals', '/games'].includes(item.path)
   ).slice(0, 5);
   
   const closeSidebar = () => setSidebarOpen(false);
@@ -60,7 +59,7 @@ const Layout = () => {
           <button onClick={() => setSidebarOpen(true)} className="text-white p-2 hover:bg-gray-700 rounded-lg">
             <FaBars size={20} />
           </button>
-          <h1 className="text-lg font-bold text-white">A2Z Ludo</h1>
+          <h1 className="text-lg font-bold text-white">KheloLudo</h1>
         </div>
         <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
           <span className="text-white font-bold text-sm">{admin?.name?.charAt(0)}</span>
@@ -78,7 +77,7 @@ const Layout = () => {
       `}>
         <div className="p-4 lg:p-6 flex items-center justify-between">
           <div>
-            <h1 className="text-xl lg:text-2xl font-bold text-white mb-1">A2Z Ludo</h1>
+            <h1 className="text-xl lg:text-2xl font-bold text-white mb-1">KheloLudo</h1>
             <p className="text-gray-400 text-xs lg:text-sm">Admin Panel</p>
           </div>
           <button onClick={closeSidebar} className="lg:hidden text-gray-400 hover:text-white p-2">

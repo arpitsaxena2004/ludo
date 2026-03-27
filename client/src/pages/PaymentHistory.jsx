@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaCheckCircle, FaClock, FaTimesCircle, FaArrowDown, FaArrowUp } from 'react-icons/fa';
+import { FaCheckCircle, FaClock, FaTimesCircle, FaArrowDown, FaArrowUp, FaSpinner } from 'react-icons/fa';
 import axios from 'axios';
 
 const PaymentHistory = () => {
@@ -41,10 +41,11 @@ const PaymentHistory = () => {
   const getStatusBadge = (status) => {
     const badges = {
       pending: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', icon: FaClock, label: 'Under Review' },
+      processing: { bg: 'bg-blue-500/20', text: 'text-blue-400', icon: FaSpinner, label: 'Processing' },
       approved: { bg: 'bg-green-500/20', text: 'text-green-400', icon: FaCheckCircle, label: 'Approved' },
       rejected: { bg: 'bg-red-500/20', text: 'text-red-400', icon: FaTimesCircle, label: 'Rejected' }
     };
-    const badge = badges[status];
+    const badge = badges[status] || badges.processing;
     const Icon = badge.icon;
     return (
       <span className={`${badge.bg} ${badge.text} px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 w-fit`}>
@@ -59,9 +60,10 @@ const PaymentHistory = () => {
       phonepe: 'PhonePe',
       googlepay: 'Google Pay',
       paytm: 'Paytm',
-      bank: 'Bank Transfer'
+      bank: 'Bank Transfer',
+      gateway: 'Payment Gateway'
     };
-    return labels[method] || method;
+    return labels[method] || 'Payment Gateway';
   };
 
   return (

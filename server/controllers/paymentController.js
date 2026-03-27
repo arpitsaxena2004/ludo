@@ -4,6 +4,7 @@ import PaymentSettings from '../models/PaymentSettings.js';
 import Transaction from '../models/Transaction.js';
 import User from '../models/User.js';
 import cloudinary from '../config/cloudinary.js';
+import { createPaymentOrder, checkPaymentStatus } from '../services/paymentGateway.js';
 
 // Get payment settings (public)
 export const getPaymentSettings = async (req, res) => {
@@ -92,15 +93,12 @@ export const uploadQRCode = async (req, res) => {
   }
 };
 
-// Create deposit request (user)
+// Create deposit request (user) - NEW AUTOMATIC GATEWAY
 export const createDepositRequest = async (req, res) => {
   try {
-    const { amount, upiTransactionId } = req.body;
+    const { amount } = req.body;
     const userId = req.user.id;
-
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: 'Payment screenshot is required' });
-    }
+    const user = await User.findById(userId);
 
     const settings = await PaymentSettings.findOne();
     
@@ -115,21 +113,49 @@ export const createDepositRequest = async (req, res) => {
       });
     }
 
-    const screenshotUrl = `/uploads/payments/${req.file.filename}`;
+    // Generate unique order ID
+    const orderId = `ORD${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    
+    // Create payment order with gateway
+    const paymentResponse = await createPaymentOrder({
+      customerMobile: user.phoneNumber,
+      customerName: user.username || user.phoneNumber,
+      amount,
+      orderId,
+      redirectUrl: `${process.env.CLIENT_URL}/payment-success`,
+      remark1: `Deposit by ${user.username}`,
+      remark2: userId.toString()
+    });
 
+    if (!paymentResponse.status) {
+      return res.status(400).json({ 
+        success: false, 
+        message: paymentResponse.message || 'Failed to create payment order' 
+      });
+    }
+
+    // Create deposit request in database
     const depositRequest = await DepositRequest.create({
       user: userId,
       amount,
-      screenshot: screenshotUrl,
-      upiTransactionId: upiTransactionId || ''
+      paymentMethod: 'gateway',
+      orderId,
+      gatewayOrderId: paymentResponse.result.orderId,
+      paymentUrl: paymentResponse.result.payment_url,
+      status: 'processing'
     });
 
     res.json({
       success: true,
-      message: 'Deposit request submitted successfully. Please wait for admin approval.',
-      data: depositRequest
+      message: 'Payment order created successfully',
+      data: {
+        orderId,
+        paymentUrl: paymentResponse.result.payment_url,
+        depositRequest
+      }
     });
   } catch (error) {
+    console.error('Deposit request error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -148,6 +174,148 @@ export const getUserDepositRequests = async (req, res) => {
   }
 };
 
+// Test payment gateway connection (for debugging)
+export const testPaymentGateway = async (req, res) => {
+  try {
+    const testOrder = {
+      customerMobile: '9999999999',
+      customerName: 'Test User',
+      amount: 1,
+      orderId: `TEST${Date.now()}`,
+      redirectUrl: `${process.env.CLIENT_URL}/payment-success`,
+      remark1: 'Test payment',
+      remark2: 'Testing'
+    };
+
+    console.log('Testing payment gateway with:', testOrder);
+    const response = await createPaymentOrder(testOrder);
+    
+    res.json({
+      success: true,
+      message: 'Payment gateway is working!',
+      data: response
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      details: 'Check server console for more details'
+    });
+  }
+};
+
+// Webhook handler for payment gateway
+export const handlePaymentWebhook = async (req, res) => {
+  try {
+    const { status, order_id, customer_mobile, amount, remark1, remark2 } = req.body;
+
+    console.log('Payment webhook received:', req.body);
+
+    // Find deposit request by order ID
+    const depositRequest = await DepositRequest.findOne({ orderId: order_id });
+
+    if (!depositRequest) {
+      console.error('Deposit request not found for order:', order_id);
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    if (status === 'SUCCESS' || status === 'success') {
+      // Update deposit request status
+      depositRequest.status = 'approved';
+      depositRequest.processedAt = new Date();
+      await depositRequest.save();
+
+      // Add amount to user's deposit cash
+      const user = await User.findById(depositRequest.user);
+      if (user) {
+        user.depositCash += depositRequest.amount;
+        await user.save();
+
+        // Create transaction record
+        await Transaction.create({
+          user: user._id,
+          type: 'deposit',
+          amount: depositRequest.amount,
+          status: 'completed',
+          paymentMethod: 'gateway',
+          description: 'Automatic deposit via payment gateway',
+          orderId: order_id
+        });
+
+        console.log(`Deposit approved automatically for user ${user._id}, amount: ₹${depositRequest.amount}`);
+      }
+
+      return res.json({ success: true, message: 'Payment processed successfully' });
+    } else {
+      // Payment failed or pending
+      depositRequest.status = status === 'PENDING' ? 'processing' : 'rejected';
+      await depositRequest.save();
+
+      return res.json({ success: true, message: 'Payment status updated' });
+    }
+  } catch (error) {
+    console.error('Webhook error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Check payment status manually
+export const checkDepositStatus = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const userId = req.user.id;
+
+    const depositRequest = await DepositRequest.findOne({ orderId, user: userId });
+
+    if (!depositRequest) {
+      return res.status(404).json({ success: false, message: 'Deposit request not found' });
+    }
+
+    // Check status from payment gateway
+    const statusResponse = await checkPaymentStatus(orderId);
+
+    if (statusResponse.status && statusResponse.result) {
+      const { txnStatus, utr } = statusResponse.result;
+
+      if (txnStatus === 'SUCCESS' && depositRequest.status !== 'approved') {
+        // Update deposit request
+        depositRequest.status = 'approved';
+        depositRequest.utr = utr || '';
+        depositRequest.processedAt = new Date();
+        await depositRequest.save();
+
+        // Add amount to user's deposit cash
+        const user = await User.findById(userId);
+        user.depositCash += depositRequest.amount;
+        await user.save();
+
+        // Create transaction record
+        await Transaction.create({
+          user: userId,
+          type: 'deposit',
+          amount: depositRequest.amount,
+          status: 'completed',
+          paymentMethod: 'gateway',
+          description: 'Automatic deposit via payment gateway',
+          orderId
+        });
+      } else if (txnStatus === 'PENDING') {
+        depositRequest.status = 'processing';
+        await depositRequest.save();
+      }
+    }
+
+    res.json({ 
+      success: true, 
+      data: depositRequest,
+      gatewayStatus: statusResponse 
+    });
+  } catch (error) {
+    console.error('Check status error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Create withdrawal request (user)
 export const createWithdrawalRequest = async (req, res) => {
   try {
@@ -155,6 +323,10 @@ export const createWithdrawalRequest = async (req, res) => {
     const userId = req.user.id;
 
     const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
     const settings = await PaymentSettings.findOne();
 
     if (!settings || !settings.isWithdrawalEnabled) {
@@ -193,6 +365,7 @@ export const createWithdrawalRequest = async (req, res) => {
       data: withdrawalRequest
     });
   } catch (error) {
+    console.error('Withdrawal request error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
