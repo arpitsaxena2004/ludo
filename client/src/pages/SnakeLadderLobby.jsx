@@ -40,8 +40,8 @@ const SnakeLadderLobby = () => {
   };
 
   const handleCreateBattle = async () => {
-    if (!entryAmount || parseFloat(entryAmount) < 10) {
-      toast.error('Minimum entry amount is ₹10');
+    if (!entryAmount || parseFloat(entryAmount) < 50) {
+      toast.error('Minimum entry amount is ₹50');
       return;
     }
 
@@ -133,7 +133,7 @@ const SnakeLadderLobby = () => {
               <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4">
                 <h3 className="text-yellow-600 font-bold text-lg mb-2">⚠️ Important Rules</h3>
                 <ul className="space-y-2 text-sm">
-                  <li className="flex gap-2"><span className="text-yellow-600">•</span><span>Minimum entry amount is ₹10</span></li>
+                  <li className="flex gap-2"><span className="text-yellow-600">•</span><span>Minimum entry amount is ₹50</span></li>
                   <li className="flex gap-2"><span className="text-yellow-600">•</span><span>Entry fee is deducted immediately when creating/joining</span></li>
                   <li className="flex gap-2"><span className="text-yellow-600">•</span><span>Admin decision is final in all disputes</span></li>
                   <li className="flex gap-2"><span className="text-yellow-600">•</span><span>Fake screenshots lead to permanent ban</span></li>

@@ -37,17 +37,10 @@ const BottomNav = () => {
                 />
               )}
               <div className="relative z-10 flex flex-col items-center">
-                <Icon className={`text-2xl ${isActive ? 'text-white mb-1' : 'text-gray-400'}`} />
-                {isActive && (
-                  <motion.span
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    className="text-white text-xs font-bold"
-                  >
-                    {item.label}
-                  </motion.span>
-                )}
+                <Icon className={`text-xl sm:text-2xl mb-1 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-white transition-colors'}`} />
+                <span className={`text-[10px] sm:text-xs font-bold leading-none ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-white transition-colors'}`}>
+                  {item.label}
+                </span>
               </div>
             </Link>
           );

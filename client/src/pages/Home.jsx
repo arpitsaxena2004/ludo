@@ -41,10 +41,13 @@ const Home = () => {
   const [noticeText, setNoticeText] = useState('⚡ 5% Commission • 3% Referral • 24/7 Withdrawal • WhatsApp Support 📞');
   const [currentSlide, setCurrentSlide] = useState(0);
   const [direction, setDirection] = useState(1);
+  const [ludoEnabled, setLudoEnabled] = useState(true);
+  const [snakeLadderEnabled, setSnakeLadderEnabled] = useState(true);
   const intervalRef = useRef(null);
 
   useEffect(() => {
     fetchNoticeText();
+    fetchGameToggles();
   }, []);
 
   useEffect(() => {
@@ -76,13 +79,25 @@ const Home = () => {
     }
   };
 
+  const fetchGameToggles = async () => {
+    try {
+      const [ludoRes, snakeRes] = await Promise.all([
+        axios.get(`${import.meta.env.VITE_API_URL}/config/public/ludoEnabled`).catch(() => null),
+        axios.get(`${import.meta.env.VITE_API_URL}/config/public/snakeLadderEnabled`).catch(() => null)
+      ]);
+      if (ludoRes?.data?.data) setLudoEnabled(ludoRes.data.data.value !== false);
+      if (snakeRes?.data?.data) setSnakeLadderEnabled(snakeRes.data.data.value !== false);
+    } catch (error) {
+      // silently fail, defaults to enabled
+    }
+  };
 
   const slide = bannerSlides[currentSlide];
 
   return (
-    <div className="min-h-screen bg-[#e8f5d0] pb-24">
+    <div className="min-h-screen bg-[#e8f5d0] pb-24 overflow-x-hidden">
       {/* Banner Carousel */}
-      <div className="mb-4 relative overflow-hidden" style={{ aspectRatio: '2.5/1' }}>
+      <div className="mt-4 mb-4 mx-4 relative overflow-hidden rounded-2xl shadow-lg" style={{ aspectRatio: '2.5/1' }}>
         <AnimatePresence initial={false} custom={direction} mode="popLayout">
           <motion.div
             key={currentSlide}
@@ -145,14 +160,14 @@ const Home = () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
-          onClick={() => navigate('/game-lobby')}
-          className="relative bg-gradient-to-br from-orange-400 to-orange-600 rounded-3xl p-6 text-center shadow-lg cursor-pointer hover:scale-105 transition-all overflow-hidden"
+          onClick={() => ludoEnabled && navigate('/game-lobby')}
+          className={`relative bg-gradient-to-br from-orange-400 to-orange-600 rounded-3xl p-6 text-center shadow-lg overflow-hidden transition-all ${ludoEnabled ? 'cursor-pointer hover:scale-105' : 'opacity-60 cursor-not-allowed'}`}
         >
           <div className="mb-3">
             <img src="/logo.png" alt="Ludo" className="w-20 h-20 mx-auto object-contain" />
           </div>
           <h3 className="text-white font-black text-xl mb-0.5">LUDO</h3>
-          <p className="text-white/90 font-bold text-sm">CLASSIC</p>
+          <p className="text-white/90 font-bold text-sm">{ludoEnabled ? 'CLASSIC' : '🔒 Maintenance'}</p>
         </motion.div>
 
         {/* Snake & Ladder Card */}
@@ -160,14 +175,14 @@ const Home = () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.15 }}
-          onClick={() => navigate('/snake-ladder-lobby')}
-          className="relative bg-gradient-to-br from-purple-500 to-indigo-700 rounded-3xl p-6 text-center shadow-lg cursor-pointer hover:scale-105 transition-all overflow-hidden"
+          onClick={() => snakeLadderEnabled && navigate('/snake-ladder-lobby')}
+          className={`relative bg-gradient-to-br from-purple-500 to-indigo-700 rounded-3xl p-6 text-center shadow-lg overflow-hidden transition-all ${snakeLadderEnabled ? 'cursor-pointer hover:scale-105' : 'opacity-60 cursor-not-allowed'}`}
         >
           <div className="mb-3">
             <div className="text-5xl mx-auto">🐍</div>
           </div>
           <h3 className="text-white font-black text-xl mb-0.5">SNAKE</h3>
-          <p className="text-white/90 font-bold text-sm">& LADDER</p>
+          <p className="text-white/90 font-bold text-sm">{snakeLadderEnabled ? '& LADDER' : '🔒 Maintenance'}</p>
         </motion.div>
       </div>
     </div>

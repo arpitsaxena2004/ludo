@@ -5,6 +5,7 @@ import { FaUpload } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { gameAPI } from '../services/api';
 import useAuthStore from '../store/authStore';
+import { addTimestampToImage } from '../utils/addTimestampToImage';
 
 const BattleRoom = () => {
   const { roomCode } = useParams();
@@ -23,11 +24,23 @@ const BattleRoom = () => {
   const [hasSubmittedResult, setHasSubmittedResult] = useState(false);
   const fileInputRef = useRef(null);
 
+  const [showWinCelebration, setShowWinCelebration] = useState(false);
+
   useEffect(() => {
     fetchBattleDetails();
     const interval = setInterval(fetchBattleDetails, 3000);
     return () => clearInterval(interval);
   }, [roomCode]);
+
+  // Check for winner celebration
+  useEffect(() => {
+    if (battle?.status === 'completed' && battle?.winner?._id === user?.id) {
+      if (!sessionStorage.getItem(`win_celebrated_${roomCode}`)) {
+        setShowWinCelebration(true);
+        sessionStorage.setItem(`win_celebrated_${roomCode}`, 'true');
+      }
+    }
+  }, [battle?.status, battle?.winner?._id, user?.id, roomCode]);
 
   // Timer countdown
   useEffect(() => {
@@ -66,7 +79,7 @@ const BattleRoom = () => {
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -80,8 +93,15 @@ const BattleRoom = () => {
       return;
     }
 
-    setScreenshot(file);
-    setScreenshotPreview(URL.createObjectURL(file));
+    try {
+      const watermarked = await addTimestampToImage(file);
+      setScreenshot(watermarked);
+      setScreenshotPreview(URL.createObjectURL(watermarked));
+    } catch {
+      // fallback to original if canvas fails
+      setScreenshot(file);
+      setScreenshotPreview(URL.createObjectURL(file));
+    }
   };
 
   const handleUploadWinScreenshot = async () => {
@@ -511,6 +531,39 @@ const BattleRoom = () => {
                 className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-bold hover:scale-105 transition-all shadow-lg"
               >
                 No
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+      {/* Win Celebration Dialog */}
+      {showWinCelebration && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0, y: 50 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center border-4 border-yellow-400"
+          >
+            <div className="text-6xl mb-4">🏆</div>
+            <h2 className="text-3xl font-black text-gray-800 mb-2">
+              You Won!
+            </h2>
+            <p className="text-gray-600 mb-6 font-semibold">
+              Congratulations! You have won <span className="text-green-600 font-bold text-xl">₹{battle.prizePool.toFixed(1)}</span>
+            </p>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate('/withdrawal')}
+                className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 py-4 rounded-xl font-black text-lg hover:scale-105 transition-all shadow-xl shadow-yellow-500/30"
+              >
+                💸 Withdraw Winnings
+              </button>
+              <button
+                onClick={() => setShowWinCelebration(false)}
+                className="w-full bg-gray-100 text-gray-600 py-3 rounded-xl font-bold hover:bg-gray-200 transition-all"
+              >
+                Close
               </button>
             </div>
           </motion.div>

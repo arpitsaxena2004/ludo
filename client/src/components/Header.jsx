@@ -34,21 +34,23 @@ const Header = () => {
             </div>
           </Link>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3">
             <Link 
               to="/deposit"
-              className="bg-gradient-to-r from-green-500 to-emerald-600 p-2.5 rounded-xl flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
+              className="bg-gradient-to-r from-green-500 to-emerald-600 px-1.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl flex flex-col items-center justify-center hover:scale-110 transition-transform shadow-lg min-w-[50px] sm:min-w-[70px]"
               title="Deposit"
             >
-              <FaArrowDown className="text-white text-lg" />
+              <FaArrowDown className="text-white text-xs sm:text-base mb-0.5" />
+              <span className="text-white text-[8px] sm:text-[10px] font-bold leading-none">Deposit</span>
             </Link>
             
             <Link 
               to="/withdrawal"
-              className="bg-gradient-to-r from-pink-500 to-purple-500 p-2.5 rounded-xl flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
+              className="bg-gradient-to-r from-pink-500 to-purple-500 px-1.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl flex flex-col items-center justify-center hover:scale-110 transition-transform shadow-lg min-w-[50px] sm:min-w-[70px]"
               title="Withdraw"
             >
-              <FaArrowUp className="text-white text-lg" />
+              <FaArrowUp className="text-white text-xs sm:text-base mb-0.5" />
+              <span className="text-white text-[8px] sm:text-[10px] font-bold leading-none">Withdraw</span>
             </Link>
           </div>
         </div>

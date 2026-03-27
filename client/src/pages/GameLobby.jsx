@@ -36,16 +36,35 @@ const GameLobby = () => {
     try {
       const response = await gameAPI.getAvailableGames('ludo');
       const games = response.data.games || [];
-      setOpenBattles(games.filter(g => g.status === 'waiting'));
-      setRunningBattles(games.filter(g => g.status === 'accepted' || g.status === 'in_progress'));
+      const newWaiting = games.filter(g => g.status === 'waiting');
+      const newRunning = games.filter(g => g.status === 'accepted' || g.status === 'in_progress');
+
+      // Detect if creator's own waiting battle got auto-expired
+      setOpenBattles(prev => {
+        const myPrevBattle = prev.find(b =>
+          b.players?.[0]?.user?._id === user?.id || b.players?.[0]?.user === user?.id
+        );
+        if (myPrevBattle) {
+          const stillExists = newWaiting.some(b => b.roomCode === myPrevBattle.roomCode) ||
+                              newRunning.some(b => b.roomCode === myPrevBattle.roomCode);
+          if (!stillExists) {
+            toast(`⏰ Your battle ${myPrevBattle.roomCode} expired — ₹${myPrevBattle.entryFee} refunded to your wallet!`, {
+              icon: '💸',
+              duration: 6000,
+            });
+          }
+        }
+        return newWaiting;
+      });
+      setRunningBattles(newRunning);
     } catch (error) {
       console.error('Failed to fetch battles:', error);
     }
   };
 
   const handleCreateBattle = async () => {
-    if (!entryAmount || parseFloat(entryAmount) < 10) {
-      toast.error('Minimum entry amount is ₹10');
+    if (!entryAmount || parseFloat(entryAmount) < 50) {
+      toast.error('Minimum entry amount is ₹50');
       return;
     }
 
@@ -185,7 +204,7 @@ const GameLobby = () => {
                 <ul className="space-y-2 text-sm">
                   <li className="flex gap-2">
                     <span className="text-yellow-600">•</span>
-                    <span>Minimum entry amount is ₹10</span>
+                    <span>Minimum entry amount is ₹50</span>
                   </li>
                   <li className="flex gap-2">
                     <span className="text-yellow-600">•</span>

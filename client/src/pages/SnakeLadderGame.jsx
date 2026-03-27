@@ -5,6 +5,7 @@ import { FaUpload } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { gameAPI } from '../services/api';
 import useAuthStore from '../store/authStore';
+import { addTimestampToImage } from '../utils/addTimestampToImage';
 
 const SnakeLadderGame = () => {
   const { roomCode } = useParams();
@@ -58,13 +59,19 @@ const SnakeLadderGame = () => {
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) { toast.error('Please select an image file'); return; }
     if (file.size > 5 * 1024 * 1024) { toast.error('Image size should be less than 5MB'); return; }
-    setScreenshot(file);
-    setScreenshotPreview(URL.createObjectURL(file));
+    try {
+      const watermarked = await addTimestampToImage(file);
+      setScreenshot(watermarked);
+      setScreenshotPreview(URL.createObjectURL(watermarked));
+    } catch {
+      setScreenshot(file);
+      setScreenshotPreview(URL.createObjectURL(file));
+    }
   };
 
   const handleUploadWinScreenshot = async () => {
