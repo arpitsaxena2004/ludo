@@ -10,6 +10,9 @@ import {
   uploadQRCode,
   createDepositRequest,
   getUserDepositRequests,
+  handlePaymentWebhook,
+  checkDepositStatus,
+  testPaymentGateway,
   createWithdrawalRequest,
   getUserWithdrawalRequests,
   getAllDepositRequests,
@@ -57,10 +60,13 @@ const upload = multer({
 
 // Public routes
 router.get('/settings', getPaymentSettings);
+router.post('/webhook', handlePaymentWebhook); // Payment gateway webhook
+router.get('/test-gateway', testPaymentGateway); // Test endpoint (remove in production)
 
 // User routes
-router.post('/deposit', protect, upload.single('screenshot'), createDepositRequest);
+router.post('/deposit', protect, createDepositRequest); // No file upload needed now
 router.get('/deposit/history', protect, getUserDepositRequests);
+router.get('/deposit/status/:orderId', protect, checkDepositStatus);
 router.post('/withdrawal', protect, createWithdrawalRequest);
 router.get('/withdrawal/history', protect, getUserWithdrawalRequests);
 

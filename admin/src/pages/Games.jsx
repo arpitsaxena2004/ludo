@@ -312,19 +312,35 @@ const Games = () => {
                               </span>
                             )}
                           </p>
-                          <a
-                            href={player.winScreenshot.startsWith('http') ? player.winScreenshot : `http://localhost:5000${player.winScreenshot}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <img
-                              src={player.winScreenshot.startsWith('http') ? player.winScreenshot : `http://localhost:5000${player.winScreenshot}`}
-                              alt="Win Screenshot"
-                              className="w-full rounded-lg border border-gray-600 object-contain max-h-56 bg-gray-900 hover:opacity-90 transition-opacity cursor-pointer"
-                              onError={(e) => { e.target.style.display = 'none'; }}
-                            />
-                          </a>
-                          <p className="text-gray-500 text-[10px] mt-1 text-center">Click image to open full size</p>
+                          <div className="bg-gray-900 rounded-lg p-2 border border-gray-600">
+                            <a
+                              href={player.winScreenshot.startsWith('http') 
+                                ? player.winScreenshot 
+                                : `${import.meta.env.VITE_API_URL.replace('/api', '')}${player.winScreenshot}`
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block"
+                            >
+                              <img
+                                src={player.winScreenshot.startsWith('http') 
+                                  ? player.winScreenshot 
+                                  : `${import.meta.env.VITE_API_URL.replace('/api', '')}${player.winScreenshot}`
+                                }
+                                alt="Win Screenshot"
+                                className="w-full rounded-lg object-contain max-h-64 hover:opacity-90 transition-opacity cursor-pointer"
+                                onError={(e) => { 
+                                  e.target.style.display = 'none';
+                                  e.target.nextSibling.style.display = 'block';
+                                }}
+                              />
+                              <div style={{ display: 'none' }} className="text-center py-8 text-gray-400">
+                                <FaImage className="text-4xl mx-auto mb-2" />
+                                <p>Failed to load image</p>
+                              </div>
+                            </a>
+                          </div>
+                          <p className="text-gray-500 text-[10px] mt-1 text-center">Click image to open full size ↗</p>
                         </div>
                       )}
 

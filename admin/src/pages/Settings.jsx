@@ -6,9 +6,6 @@ import { adminAPI } from '../services/api';
 
 const Settings = () => {
   const [paymentSettings, setPaymentSettings] = useState({
-    upiId: '',
-    upiNumber: '',
-    qrCode: '',
     minDeposit: 50,
     maxDeposit: 100000,
     minWithdrawal: 100,
@@ -36,11 +33,8 @@ const Settings = () => {
     new: false,
     confirm: false
   });
-  const [qrFile, setQrFile] = useState(null);
-  const [qrPreview, setQrPreview] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploadingQr, setUploadingQr] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
@@ -88,58 +82,10 @@ const Settings = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPaymentSettings(response.data.data);
-      setQrPreview(response.data.data.qrCode);
     } catch (error) {
       console.error('Failed to fetch payment settings');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleQrFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('File size should be less than 5MB');
-        return;
-      }
-      setQrFile(file);
-      setQrPreview(URL.createObjectURL(file));
-    }
-  };
-
-  const handleUploadQr = async () => {
-    if (!qrFile) {
-      toast.error('Please select a QR code image');
-      return;
-    }
-
-    setUploadingQr(true);
-    try {
-      const formData = new FormData();
-      formData.append('qrCode', qrFile);
-
-      const adminStorage = localStorage.getItem('admin-storage');
-      const token = adminStorage ? JSON.parse(adminStorage).state.token : null;
-      const response = await axios.post(
-        '/payment/qr-code',
-        formData,
-        {
-          baseURL: import.meta.env.VITE_API_URL,
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          }
-        }
-      );
-
-      setPaymentSettings(prev => ({ ...prev, qrCode: response.data.data.qrCode }));
-      setQrFile(null);
-      toast.success('QR code uploaded successfully');
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to upload QR code');
-    } finally {
-      setUploadingQr(false);
     }
   };
 
@@ -473,70 +419,18 @@ const Settings = () => {
       <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
         <div className="p-4 lg:p-6 border-b border-gray-700 flex items-center gap-3">
           <FaQrcode className="text-green-500" />
-          <h2 className="text-lg font-semibold text-white">Payment Settings</h2>
+          <h2 className="text-lg font-semibold text-white">Payment Settings (Automatic Gateway)</h2>
         </div>
 
         <div className="p-4 lg:p-6 space-y-6">
-          {/* QR Code Upload */}
-          <div>
-            <label className="block text-gray-400 text-sm mb-2">Payment QR Code</label>
-            <div className="flex flex-col lg:flex-row gap-4">
-              {qrPreview && (
-                <div className="bg-white p-4 rounded-lg w-fit">
-                  <img src={qrPreview} alt="QR Code" className="w-48 h-48 object-contain" />
-                </div>
-              )}
-              <div className="flex-1">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleQrFileChange}
-                  className="hidden"
-                  id="qr-upload"
-                />
-                <label
-                  htmlFor="qr-upload"
-                  className="block w-full lg:w-auto bg-gray-700 text-white px-4 py-3 rounded-lg cursor-pointer hover:bg-gray-600 text-center"
-                >
-                  <FaUpload className="inline mr-2" />
-                  Choose QR Code Image
-                </label>
-                {qrFile && (
-                  <button
-                    onClick={handleUploadQr}
-                    disabled={uploadingQr}
-                    className="mt-2 w-full lg:w-auto bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50"
-                  >
-                    {uploadingQr ? 'Uploading...' : 'Upload QR Code'}
-                  </button>
-                )}
-              </div>
-            </div>
+          {/* Info Message */}
+          <div className="bg-blue-500/10 border border-blue-500 rounded-lg p-4">
+            <p className="text-blue-400 text-sm">
+              💡 Deposits are now processed automatically through payment gateway. No manual UPI/QR code needed.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-            <div>
-              <label className="block text-gray-400 text-sm mb-2">UPI ID</label>
-              <input
-                type="text"
-                value={paymentSettings.upiId}
-                onChange={(e) => handlePaymentChange('upiId', e.target.value)}
-                placeholder="yourname@upi"
-                className="w-full bg-gray-700 text-white px-4 py-3 rounded-lg outline-none border border-gray-600 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-400 text-sm mb-2">UPI Number</label>
-              <input
-                type="text"
-                value={paymentSettings.upiNumber}
-                onChange={(e) => handlePaymentChange('upiNumber', e.target.value)}
-                placeholder="10-digit mobile number"
-                className="w-full bg-gray-700 text-white px-4 py-3 rounded-lg outline-none border border-gray-600 focus:border-blue-500"
-              />
-            </div>
-
             <div>
               <label className="block text-gray-400 text-sm mb-2">Min Deposit (₹)</label>
               <input

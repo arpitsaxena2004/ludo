@@ -1,0 +1,74 @@
+This API allows you to create a PayIN Request using the platform.
+
+Endpoint PayIN Api
+
+POST https://pay0.shop/api/create-order
+
+Request Parameters
+
+ParameterTypecustomer_mobileIntegercustomer_namestringuser_tokenstringamountfloatorder_idstringredirect_urlurlremark1stringremark2string
+
+Request Headers
+
+ParameterDescriptionContent-TypeForm-Encoded Payload (application/x-www-form-urlencoded)
+
+Response
+
+FieldTypeDescriptionstatusbooleanAPI request status.resultobjectDetails of successful request.payment_urlstringURL for processing payment.messagestringDescription of request result.
+
+Example - Create PayIN Request
+
+Request:
+
+<?php // API URL $api_url = 'https://pay0.shop/api/create-order';  // Form-encoded payload data $post_data = [     'customer_mobile' => '8145344963',     'customer_name' => 'Your Name',     'user_token' => 'your_api_key',     'amount' => '1',     'order_id' => '8787772321800',     'redirect_url' => 'https://pay0.shop',     'remark1' => 'testremark',     'remark2' => 'testremark2' ];  // Initialize cURL session $ch = curl_init($api_url);  // Set cURL options curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); curl_setopt($ch, CURLOPT_POST, true); curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data)); // to format POST data curl_setopt($ch, CURLOPT_HTTPHEADER, [     'Content-Type: application/x-www-form-urlencoded' ]);  // Execute the cURL session and capture the response $response = curl_exec($ch);  // Check for cURL errors if (curl_errno($ch)) {     echo 'cURL Error: ' . curl_error($ch); } else {     echo $response; }  // Close the cURL session curl_close($ch); ?>
+
+Response (Success):
+
+{   "status": true,   "message": "Order Created Successfully",   "result": {     "orderId": "1234561705047510",     "payment_url": "https://pay0.shop/payment/MTIzNDU2MTc"   } } 
+
+Response (Error):
+
+{   "status": false,   "message": "Your Plan Expired Please Renew" } 
+
+Error Handling
+
+If the status in the response is error, check the message field for details on the issue.
+
+Endpoint for Payin Status
+
+POST https://pay0.shop/api/check-order-status
+
+Request Parameters
+
+ParameterTypeDescriptionuser_tokenstringThe API Key.order_idstringAlphaNumeric.
+
+Request Headers
+
+ParameterDescriptionContent-TypeForm-Encoded Payload (application/x-www-form-urlencoded)
+
+Response
+
+FieldTypeDescriptionstatusbooleanAPI request success status.messagestringAPI result message.resultobjectDetails of transaction.txnStatusstringTransaction status.orderIdstringOrder ID.amountstringTransaction amount.datestringTransaction time.utrstringUTR Number.
+
+Example - Check PayIN Status
+
+Request:
+
+<?php // API URL $api_url = 'https://pay0.shop/api/check-order-status';  // Form-encoded payload data $post_data = [     'user_token' => 'your_api_key',     'order_id' => '8787772321800' ];  // Initialize cURL session $ch = curl_init($api_url);  // Set cURL options curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); curl_setopt($ch, CURLOPT_POST, true); curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data)); // to format POST data curl_setopt($ch, CURLOPT_HTTPHEADER, [     'Content-Type: application/x-www-form-urlencoded' ]);  // Execute the cURL session and capture the response $response = curl_exec($ch);  // Check for cURL errors if (curl_errno($ch)) {     echo 'cURL Error: ' . curl_error($ch); } else {     echo $response; }  // Close the cURL session curl_close($ch); ?>
+
+Response (Success):
+
+{     "status": true,     "message": "Transaction Successfully",     "result": {         "txnStatus": "SUCCESS", //For Pending PENDING         "orderId": "784525sdD",         "amount": "1",         "date": "2024-01-12 13:22:08",         "utr": "454525454245" //only when success     } } 
+
+Response (Error):
+
+{     "status": false,     "message": "Error Message" } 
+
+Example - Webhook Response
+
+POST:
+
+<?php // Check if the POST request has been made if ($_SERVER['REQUEST_METHOD'] === 'POST') {     // Retrieve data from POST request     $status = $_POST['status'];     $order_id = $_POST['order_id'];     $customer_mobile = $_POST['customer_mobile'];     $amount = $_POST['amount'];     $remark1 = $_POST['remark1'];     $remark2 = $_POST['remark2'];      // Process the received data     // For example, you can save it to a database, log it, or perform other actions      } else {     // Handle other request methods if necessary     http_response_code(405); // Method Not Allowed     echo 'Only POST requests are allowed'; } ?>
+
+
+

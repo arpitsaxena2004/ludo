@@ -12,8 +12,10 @@ const Login = () => {
   const navigate = useNavigate();
   const { setAuth } = useAuthStore();
   
-  const [isLogin, setIsLogin] = useState(true);
+  // If referral code is in URL, show signup form by default
+  const [isLogin, setIsLogin] = useState(!searchParams.get('ref'));
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [referralCode, setReferralCode] = useState(searchParams.get('ref') || '');
@@ -22,6 +24,15 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [showBlockedModal, setShowBlockedModal] = useState(searchParams.get('blocked') === 'true');
   const [signupBonus, setSignupBonus] = useState(50);
+
+  // Update referral code if URL changes
+  useEffect(() => {
+    const refCode = searchParams.get('ref');
+    if (refCode) {
+      setReferralCode(refCode);
+      setIsLogin(false); // Show signup form
+    }
+  }, [searchParams]);
 
   // Fetch signup bonus from config
   useEffect(() => {
@@ -73,6 +84,11 @@ const Login = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
     
+    if (!name || name.trim().length < 2) {
+      toast.error('Please enter your name (minimum 2 characters)');
+      return;
+    }
+
     if (phoneNumber.length < 10) {
       toast.error('Please enter a valid phone number');
       return;
@@ -90,7 +106,7 @@ const Login = () => {
 
     setLoading(true);
     try {
-      const response = await authAPI.register(phoneNumber, password, referralCode);
+      const response = await authAPI.register(phoneNumber, password, referralCode, name.trim());
       setAuth(response.data.user, response.data.token);
       toast.success(response.data.message);
       toast.success(`You received ₹${signupBonus} bonus!`, { duration: 5000 });
@@ -219,6 +235,21 @@ const Login = () => {
               <>
                 <div className="mb-4">
                   <label className="block text-gray-700 mb-2 font-medium text-sm">
+                    Your Name
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Enter your full name"
+                    className="w-full bg-gray-50 border-2 border-gray-300 px-4 py-4 rounded-xl text-gray-800 outline-none focus:border-orange-500 transition-colors placeholder-gray-400"
+                    required
+                    minLength={2}
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-gray-700 mb-2 font-medium text-sm">
                     Confirm Password
                   </label>
                   <div className="relative">
@@ -241,20 +272,27 @@ const Login = () => {
                   </div>
                 </div>
 
-                {/* Referral Code is only shown and locked if provided in the URL */}
-                {searchParams.get('ref') && (
-                  <div className="mb-6">
-                    <label className="block text-gray-700 mb-2 font-medium text-sm">
-                      Referral Code
-                    </label>
-                    <input
-                      type="text"
-                      value={searchParams.get('ref')}
-                      readOnly
-                      className="w-full bg-gray-200 border-2 border-gray-300 px-4 py-4 rounded-xl text-gray-800 outline-none cursor-not-allowed"
-                    />
-                  </div>
-                )}
+                <div className="mb-6">
+                  <label className="block text-gray-700 mb-2 font-medium text-sm">
+                    Referral Code (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                    placeholder="Enter referral code if you have one"
+                    className={`w-full bg-gray-50 border-2 border-gray-300 px-4 py-4 rounded-xl text-gray-800 outline-none focus:border-orange-500 transition-colors placeholder-gray-400 uppercase ${
+                      searchParams.get('ref') ? 'cursor-not-allowed bg-gray-200' : ''
+                    }`}
+                    readOnly={!!searchParams.get('ref')}
+                    maxLength={10}
+                  />
+                  {referralCode && (
+                    <p className="text-xs text-green-600 mt-1">
+                      🎁 You'll get extra bonus with this referral code!
+                    </p>
+                  )}
+                </div>
               </>
             )}
 

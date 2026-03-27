@@ -1,19 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaQrcode, FaCopy, FaUpload, FaHistory, FaCheckCircle, FaInfoCircle, FaTimes } from 'react-icons/fa';
+import { FaWallet, FaHistory, FaInfoCircle, FaCheckCircle, FaSpinner } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import useAuthStore from '../store/authStore';
 
 const Deposit = () => {
   const navigate = useNavigate();
+  const { user, fetchUser } = useAuthStore();
   const [paymentSettings, setPaymentSettings] = useState(null);
   const [amount, setAmount] = useState('');
-  const [screenshot, setScreenshot] = useState(null);
-  const [screenshotPreview, setScreenshotPreview] = useState('');
-  const [upiTransactionId, setUpiTransactionId] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showQRModal, setShowQRModal] = useState(false);
 
   useEffect(() => {
     fetchPaymentSettings();
@@ -30,31 +28,6 @@ const Deposit = () => {
     }
   };
 
-  const handleCopy = (text) => {
-    navigator.clipboard.writeText(text);
-    toast.success('Copied to clipboard!', { icon: '📋' });
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('File size should be less than 5MB');
-        return;
-      }
-      setScreenshot(file);
-      setScreenshotPreview(URL.createObjectURL(file));
-    }
-  };
-
-  const handleContinue = () => {
-    if (!amount || parseFloat(amount) < paymentSettings.minDeposit || parseFloat(amount) > paymentSettings.maxDeposit) {
-      toast.error(`Amount must be between ₹${paymentSettings.minDeposit} and ₹${paymentSettings.maxDeposit}`);
-      return;
-    }
-    setShowQRModal(true);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -63,47 +36,42 @@ const Deposit = () => {
       return;
     }
 
-    if (!screenshot) {
-      toast.error('Please upload payment screenshot');
+    const depositAmount = parseFloat(amount);
+
+    if (!depositAmount || depositAmount < paymentSettings.minDeposit || depositAmount > paymentSettings.maxDeposit) {
+      toast.error(`Amount must be between ₹${paymentSettings.minDeposit} and ₹${paymentSettings.maxDeposit}`);
       return;
     }
 
     setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append('amount', amount);
-      formData.append('screenshot', screenshot);
-      formData.append('upiTransactionId', upiTransactionId);
-
       const authStorage = localStorage.getItem('auth-storage');
       const token = authStorage ? JSON.parse(authStorage).state.token : null;
-      await axios.post('/payment/deposit', formData, {
-        baseURL: import.meta.env.VITE_API_URL,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-
-      toast.success('Deposit request submitted! 🎉', {
-        duration: 4000,
-        icon: '✅'
-      });
-      setAmount('');
-      setScreenshot(null);
-      setScreenshotPreview('');
-      setUpiTransactionId('');
-      setShowQRModal(false);
       
-      setTimeout(() => navigate('/payment-history'), 1500);
+      const response = await axios.post(
+        '/payment/deposit',
+        { amount: depositAmount },
+        {
+          baseURL: import.meta.env.VITE_API_URL,
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      if (response.data.success && response.data.data.paymentUrl) {
+        toast.success('Redirecting to payment gateway...', {
+          icon: '🚀'
+        });
+        
+        // Redirect to payment gateway
+        window.location.href = response.data.data.paymentUrl;
+      }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to submit deposit request');
-    } finally {
+      toast.error(error.response?.data?.message || 'Failed to create payment order');
       setLoading(false);
     }
   };
 
-  const quickAmounts = [100, 500, 1000, 2000, 5000, 10000];
+  const quickAmounts = [100, 500, 1000, 2000, 5000];
 
   if (!paymentSettings) {
     return (
@@ -146,13 +114,35 @@ const Deposit = () => {
           </motion.div>
         )}
 
-        {/* Amount Entry Form */}
+        {/* Balance Card */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
+          className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-3xl p-8 mb-6 border-2 border-blue-400 shadow-2xl"
+        >
+          <div className="flex items-center gap-4 mb-3">
+            <div className="bg-white/20 p-4 rounded-2xl">
+              <FaWallet className="text-4xl text-white" />
+            </div>
+            <div>
+              <h2 className="text-white/90 text-lg font-semibold">Current Balance</h2>
+              <p className="text-5xl font-black text-white">₹{user?.depositCash || 0}</p>
+            </div>
+          </div>
+          <p className="text-white/80 text-sm bg-white/10 rounded-xl p-3 mt-4">
+            💡 Add money instantly via secure payment gateway
+          </p>
+        </motion.div>
+
+        {/* Deposit Form */}
+        <motion.form
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          onSubmit={handleSubmit}
           className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-3xl p-6 border-2 border-gray-700 space-y-6"
         >
-          <h2 className="text-2xl font-black text-white mb-4">Enter Deposit Amount</h2>
+          <h2 className="text-2xl font-black text-white mb-4">Add Money</h2>
 
           <div>
             <label className="block text-gray-300 text-sm font-semibold mb-3">Amount (₹)</label>
@@ -162,8 +152,10 @@ const Deposit = () => {
               onChange={(e) => setAmount(e.target.value)}
               placeholder={`Min: ₹${paymentSettings.minDeposit}, Max: ₹${paymentSettings.maxDeposit}`}
               className="w-full px-5 py-4 bg-gray-700/50 border-2 border-gray-600 rounded-2xl text-white text-lg font-bold focus:outline-none focus:border-green-500 transition-all"
+              required
               min={paymentSettings.minDeposit}
               max={paymentSettings.maxDeposit}
+              disabled={loading}
             />
             
             <div className="grid grid-cols-3 gap-2 mt-3">
@@ -172,7 +164,8 @@ const Deposit = () => {
                   key={amt}
                   type="button"
                   onClick={() => setAmount(amt.toString())}
-                  className="bg-gray-700/50 hover:bg-green-500/30 border border-gray-600 hover:border-green-500 text-white py-2 rounded-xl font-semibold transition-all"
+                  disabled={loading}
+                  className="bg-gray-700/50 hover:bg-green-500/30 border border-gray-600 hover:border-green-500 text-white py-2 rounded-xl font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   ₹{amt}
                 </button>
@@ -180,149 +173,36 @@ const Deposit = () => {
             </div>
           </div>
 
+          <div className="bg-blue-500/10 border-2 border-blue-500 rounded-2xl p-4">
+            <div className="flex items-start gap-3">
+              <FaCheckCircle className="text-blue-400 text-xl mt-1 flex-shrink-0" />
+              <div>
+                <h3 className="text-blue-400 font-bold mb-2">Instant & Secure Payment</h3>
+                <ul className="text-gray-300 text-sm space-y-1">
+                  <li>✓ Instant credit after successful payment</li>
+                  <li>✓ 100% secure payment gateway</li>
+                  <li>✓ Multiple payment options (UPI, Cards, Net Banking)</li>
+                  <li>✓ No manual verification needed</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
           <button
-            type="button"
-            onClick={handleContinue}
-            disabled={!paymentSettings.isDepositEnabled}
+            type="submit"
+            disabled={loading || !paymentSettings.isDepositEnabled}
             className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-5 rounded-2xl font-black text-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl transition-all transform hover:scale-105"
           >
-            Continue to Payment
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <FaSpinner className="animate-spin" />
+                Processing...
+              </span>
+            ) : (
+              'Proceed to Payment'
+            )}
           </button>
-        </motion.div>
-
-        {/* QR Code Modal */}
-        {showQRModal && (
-          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-gray-700 shadow-2xl"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-black text-white flex items-center gap-2">
-                  <FaQrcode className="text-green-400" /> Payment Details
-                </h2>
-                <button
-                  onClick={() => setShowQRModal(false)}
-                  className="text-gray-400 hover:text-white text-2xl"
-                >
-                  <FaTimes />
-                </button>
-              </div>
-
-              <div className="bg-yellow-500/20 border-2 border-yellow-500 rounded-xl p-3 mb-6">
-                <p className="text-yellow-300 text-sm font-semibold text-center">
-                  Amount to Pay: ₹{amount}
-                </p>
-              </div>
-
-              {/* QR Code */}
-              {paymentSettings.qrCode && (
-                <div className="flex justify-center mb-6">
-                  <div className="bg-white p-6 rounded-2xl shadow-2xl">
-                    <img src={paymentSettings.qrCode} alt="QR Code" className="w-64 h-64 object-contain" />
-                  </div>
-                </div>
-              )}
-
-              {/* UPI Details */}
-              <div className="space-y-4 mb-6">
-                {paymentSettings.upiId && (
-                  <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-500/50 rounded-2xl p-4">
-                    <p className="text-gray-400 text-sm mb-2 font-semibold">UPI ID</p>
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-white font-mono text-lg font-bold break-all">{paymentSettings.upiId}</p>
-                      <button
-                        onClick={() => handleCopy(paymentSettings.upiId)}
-                        className="bg-green-500 text-white p-3 rounded-xl hover:bg-green-600 transition-all flex-shrink-0"
-                      >
-                        <FaCopy />
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {paymentSettings.upiNumber && (
-                  <div className="bg-gradient-to-r from-blue-500/20 to-indigo-500/20 border-2 border-blue-500/50 rounded-2xl p-4">
-                    <p className="text-gray-400 text-sm mb-2 font-semibold">UPI Number</p>
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-white font-mono text-lg font-bold">{paymentSettings.upiNumber}</p>
-                      <button
-                        onClick={() => handleCopy(paymentSettings.upiNumber)}
-                        className="bg-blue-500 text-white p-3 rounded-xl hover:bg-blue-600 transition-all flex-shrink-0"
-                      >
-                        <FaCopy />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Form Below QR */}
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-gray-300 text-sm font-semibold mb-3">UPI Transaction ID (Optional)</label>
-                  <input
-                    type="text"
-                    value={upiTransactionId}
-                    onChange={(e) => setUpiTransactionId(e.target.value)}
-                    placeholder="Enter transaction ID from payment app"
-                    className="w-full px-5 py-4 bg-gray-700/50 border-2 border-gray-600 rounded-2xl text-white focus:outline-none focus:border-green-500 transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 text-sm font-semibold mb-3">Payment Screenshot *</label>
-                  <div className="border-4 border-dashed border-gray-600 rounded-2xl p-8 text-center hover:border-green-500 transition-all">
-                    {screenshotPreview ? (
-                      <div className="space-y-4">
-                        <img src={screenshotPreview} alt="Preview" className="max-h-80 mx-auto rounded-2xl shadow-2xl" />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setScreenshot(null);
-                            setScreenshotPreview('');
-                          }}
-                          className="text-red-400 hover:text-red-300 font-semibold"
-                        >
-                          Remove Screenshot
-                        </button>
-                      </div>
-                    ) : (
-                      <label className="cursor-pointer block">
-                        <FaUpload className="mx-auto text-6xl text-gray-400 mb-4" />
-                        <p className="text-white font-semibold text-lg mb-2">Click to upload screenshot</p>
-                        <p className="text-gray-400 text-sm">PNG, JPG up to 5MB</p>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleFileChange}
-                          className="hidden"
-                          required
-                        />
-                      </label>
-                    )}
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-5 rounded-2xl font-black text-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl transition-all transform hover:scale-105"
-                >
-                  {loading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      Submitting...
-                    </span>
-                  ) : (
-                    'Submit Deposit Request'
-                  )}
-                </button>
-              </form>
-            </motion.div>
-          </div>
-        )}
+        </motion.form>
       </div>
     </div>
   );

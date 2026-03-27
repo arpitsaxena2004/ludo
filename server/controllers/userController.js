@@ -2,6 +2,49 @@ import User from '../models/User.js';
 import cloudinary from '../config/cloudinary.js';
 import fs from 'fs';
 
+// @desc    Get user profile
+// @route   GET /api/user/profile
+// @access  Private
+export const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        id: user._id,
+        phoneNumber: user.phoneNumber,
+        email: user.email,
+        username: user.username,
+        avatar: user.avatar,
+        referralCode: user.referralCode,
+        referredBy: user.referredBy,
+        depositCash: user.depositCash,
+        winningCash: user.winningCash,
+        bonusCash: user.bonusCash,
+        upiId: user.upiId,
+        bankDetails: user.bankDetails,
+        totalCoinsWon: user.totalCoinsWon,
+        totalWithdrawal: user.totalWithdrawal,
+        totalGamesPlayed: user.totalGamesPlayed,
+        totalGamesWon: user.totalGamesWon,
+        totalGamesLost: user.totalGamesLost,
+        referralEarnings: user.referralEarnings,
+        isKYCVerified: user.isKYCVerified,
+        isActive: user.isActive,
+        isBlocked: user.isBlocked
+      }
+    });
+  } catch (error) {
+    console.error('Get Profile Error:', error);
+    res.status(500).json({ success: false, message: 'Failed to get profile', error: error.message });
+  }
+};
+
 // @desc    Update user profile
 // @route   PUT /api/user/profile
 // @access  Private

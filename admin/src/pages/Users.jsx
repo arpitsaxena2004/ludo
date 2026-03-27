@@ -8,6 +8,14 @@ import {
   FaChartLine, FaCoins, FaMoneyBillWave
 } from 'react-icons/fa';
 
+// Helper function to get proper avatar URL
+const getAvatarUrl = (avatar, username, phoneNumber) => {
+  if (!avatar) return '/avatar1.png'; // Default avatar
+  if (avatar.startsWith('http')) return avatar;
+  // For local avatar paths like /avatar1.png, /avatar2.png, /avatar3.png
+  return avatar;
+};
+
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -236,9 +244,12 @@ const Users = () => {
               <div key={user._id} className="bg-gray-800 rounded-xl p-4 border border-gray-700">
                 <div className="flex items-start gap-3 mb-3">
                   <img
-                    src={user.avatar || 'https://via.placeholder.com/50'}
+                    src={getAvatarUrl(user.avatar, user.username, user.phoneNumber)}
                     alt={user.username}
                     className="w-12 h-12 rounded-full object-cover border-2 border-gray-600"
+                    onError={(e) => {
+                      e.target.src = `https://ui-avatars.com/api/?name=${user.username || 'User'}&background=random`;
+                    }}
                   />
                   <div className="flex-1">
                     <p className="text-white font-semibold">{user.username || 'User'}</p>
@@ -290,9 +301,12 @@ const Users = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <img
-                            src={user.avatar || 'https://via.placeholder.com/40'}
+                            src={getAvatarUrl(user.avatar, user.username, user.phoneNumber)}
                             alt={user.username}
                             className="w-10 h-10 rounded-full object-cover border-2 border-gray-600"
+                            onError={(e) => {
+                              e.target.src = `https://ui-avatars.com/api/?name=${user.username || 'User'}&background=random`;
+                            }}
                           />
                           <div>
                             <p className="text-white font-medium">{user.username || 'User'}</p>
@@ -358,9 +372,12 @@ const Users = () => {
             <div className="sticky top-0 bg-gray-800 border-b border-gray-700 p-6 flex items-center justify-between z-10">
               <div className="flex items-center gap-4">
                 <img
-                  src={selectedUser.avatar || 'https://via.placeholder.com/80'}
+                  src={getAvatarUrl(selectedUser.avatar, selectedUser.username, selectedUser.phoneNumber)}
                   alt={selectedUser.username}
                   className="w-16 h-16 rounded-full object-cover border-4 border-gray-600"
+                  onError={(e) => {
+                    e.target.src = `https://ui-avatars.com/api/?name=${selectedUser.username || 'User'}&background=random`;
+                  }}
                 />
                 <div>
                   <h3 className="text-2xl font-bold text-white">{selectedUser.username || 'User'}</h3>

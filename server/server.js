@@ -22,6 +22,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { getPublicPolicy } from './controllers/adminController.js';
 import { initializeDefaultConfigs } from './controllers/configController.js';
 import { autoExpireWaitingGames } from './jobs/autoExpireGames.js';
+import { startPaymentCheckJob } from './jobs/checkPendingPayments.js';
 
 dotenv.config();
 
@@ -68,6 +69,10 @@ setInterval(autoExpireWaitingGames, 30 * 1000);
 // Also run immediately on startup
 setTimeout(autoExpireWaitingGames, 5000);
 
+// Start background job: check pending payments
+// Runs every 2 minutes to check payment status and auto-reject after 6 minutes
+startPaymentCheckJob();
+
 // Middleware
 app.use(helmet());
 app.use(compression());
@@ -90,8 +95,14 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static uploaded files (screenshots, etc.)
-app.use('/uploads', express.static(join(__dirname, 'uploads')));
+// Serve static uploaded files with CORS headers
+app.use('/uploads', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);

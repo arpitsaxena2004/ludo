@@ -14,10 +14,14 @@ const generateToken = (id) => {
 // @access  Public
 export const register = async (req, res) => {
   try {
-    const { phoneNumber, password, referralCode } = req.body;
+    const { phoneNumber, password, referralCode, username } = req.body;
 
     if (!phoneNumber || !password) {
       return res.status(400).json({ message: 'Phone number and password are required' });
+    }
+
+    if (!username || username.trim().length < 2) {
+      return res.status(400).json({ message: 'Name is required (minimum 2 characters)' });
     }
 
     if (password.length < 6) {
@@ -59,6 +63,7 @@ export const register = async (req, res) => {
     const user = await User.create({
       phoneNumber,
       password,
+      username: username.trim(),
       referralCode: referralCodeGenerated,
       referredBy: referralCode || null,
       bonusCash: signupBonus, // Welcome bonus from config
@@ -69,8 +74,11 @@ export const register = async (req, res) => {
     if (referralCode) {
       const referrer = await User.findOne({ referralCode });
       if (referrer) {
-        referrer.referralEarnings += 25;
-        referrer.bonusCash += 25;
+        const referralBonusConfig = await AppConfig.findOne({ key: 'referralBonus' });
+        const referralBonus = referralBonusConfig ? referralBonusConfig.value : 25;
+        
+        referrer.referralEarnings += referralBonus;
+        referrer.bonusCash += referralBonus;
         referrer.referredUsers.push(user._id);
         await referrer.save();
       }

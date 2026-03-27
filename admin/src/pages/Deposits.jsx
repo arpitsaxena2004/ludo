@@ -118,11 +118,11 @@ const Deposits = () => {
 
   const getStatusBadge = (status) => {
     const badges = {
-      pending: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', icon: FaClock, label: 'Pending', border: 'border-yellow-500' },
+      processing: { bg: 'bg-blue-500/20', text: 'text-blue-400', icon: FaSpinner, label: 'Processing', border: 'border-blue-500' },
       approved: { bg: 'bg-green-500/20', text: 'text-green-400', icon: FaCheckCircle, label: 'Approved', border: 'border-green-500' },
       rejected: { bg: 'bg-red-500/20', text: 'text-red-400', icon: FaTimesCircle, label: 'Rejected', border: 'border-red-500' }
     };
-    const badge = badges[status];
+    const badge = badges[status] || badges.processing;
     const Icon = badge.icon;
     return (
       <span className={`${badge.bg} ${badge.text} ${badge.border} border px-3 py-1 rounded-lg text-xs font-semibold inline-flex items-center gap-1`}>
@@ -133,7 +133,7 @@ const Deposits = () => {
 
   const stats = {
     total: deposits.length,
-    pending: deposits.filter(d => d.status === 'pending').length,
+    processing: deposits.filter(d => d.status === 'processing').length,
     approved: deposits.filter(d => d.status === 'approved').length,
     rejected: deposits.filter(d => d.status === 'rejected').length,
     totalAmount: deposits.filter(d => d.status === 'approved').reduce((sum, d) => sum + d.amount, 0)
@@ -159,9 +159,9 @@ const Deposits = () => {
           <p className="text-blue-400 text-sm font-semibold mb-1">Total Requests</p>
           <p className="text-3xl font-black text-white">{stats.total}</p>
         </div>
-        <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 border border-yellow-500 rounded-xl p-4">
-          <p className="text-yellow-400 text-sm font-semibold mb-1">Pending</p>
-          <p className="text-3xl font-black text-white">{stats.pending}</p>
+        <div className="bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 border border-cyan-500 rounded-xl p-4">
+          <p className="text-cyan-400 text-sm font-semibold mb-1">Processing</p>
+          <p className="text-3xl font-black text-white">{stats.processing}</p>
         </div>
         <div className="bg-gradient-to-br from-green-500/20 to-green-600/20 border border-green-500 rounded-xl p-4">
           <p className="text-green-400 text-sm font-semibold mb-1">Approved</p>
@@ -202,14 +202,14 @@ const Deposits = () => {
               All
             </button>
             <button
-              onClick={() => setStatusFilter('pending')}
+              onClick={() => setStatusFilter('processing')}
               className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap flex-shrink-0 ${
-                statusFilter === 'pending'
-                  ? 'bg-yellow-600 text-white'
+                statusFilter === 'processing'
+                  ? 'bg-cyan-600 text-white'
                   : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
               }`}
             >
-              Pending
+              Processing
             </button>
             <button
               onClick={() => setStatusFilter('approved')}
@@ -262,10 +262,7 @@ const Deposits = () => {
                       <p className="text-gray-400 text-xs mb-1">Amount</p>
                       <p className="text-green-400 font-bold text-xl">₹{deposit.amount}</p>
                     </div>
-                    <div>
-                      <p className="text-gray-400 text-xs mb-1">Transaction ID</p>
-                      <p className="text-white text-sm">{deposit.upiTransactionId || 'N/A'}</p>
-                    </div>
+               
                     <div>
                       <p className="text-gray-400 text-xs mb-1">Date</p>
                       <p className="text-white text-sm">{new Date(deposit.createdAt).toLocaleDateString()}</p>
@@ -335,19 +332,54 @@ const Deposits = () => {
                 </div>
               </div>
 
-              {/* Screenshot */}
-              <div>
-                <p className="text-gray-400 text-sm mb-3 flex items-center gap-2">
-                  <FaImage /> Payment Screenshot
-                </p>
-                <a href={selectedDeposit.screenshot} target="_blank" rel="noopener noreferrer">
-                  <img 
-                    src={selectedDeposit.screenshot} 
-                    alt="Payment Screenshot" 
-                    className="w-full max-w-md mx-auto rounded-xl border-2 border-gray-700 hover:border-blue-500 cursor-pointer transition-all shadow-2xl"
-                  />
-                </a>
-              </div>
+              {/* Payment Gateway Info - Only show for gateway deposits */}
+              {selectedDeposit.paymentMethod === 'gateway' && (
+                <div className="bg-blue-500/10 border border-blue-500 rounded-xl p-4">
+                  <h3 className="text-blue-400 font-semibold mb-3 flex items-center gap-2">
+                    <FaCheckCircle /> Payment Gateway Details
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    {selectedDeposit.orderId && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Order ID:</span>
+                        <span className="text-white font-mono">{selectedDeposit.orderId}</span>
+                      </div>
+                    )}
+                    {selectedDeposit.gatewayOrderId && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Gateway Order ID:</span>
+                        <span className="text-white font-mono">{selectedDeposit.gatewayOrderId}</span>
+                      </div>
+                    )}
+                    {selectedDeposit.utr && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">UTR:</span>
+                        <span className="text-white font-mono">{selectedDeposit.utr}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Payment Method:</span>
+                      <span className="text-white">Automatic Gateway</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Screenshot - Only show for manual UPI deposits */}
+              {selectedDeposit.paymentMethod === 'upi' && selectedDeposit.screenshot && (
+                <div>
+                  <p className="text-gray-400 text-sm mb-3 flex items-center gap-2">
+                    <FaImage /> Payment Screenshot
+                  </p>
+                  <a href={selectedDeposit.screenshot} target="_blank" rel="noopener noreferrer">
+                    <img 
+                      src={selectedDeposit.screenshot} 
+                      alt="Payment Screenshot" 
+                      className="w-full max-w-md mx-auto rounded-xl border-2 border-gray-700 hover:border-blue-500 cursor-pointer transition-all shadow-2xl"
+                    />
+                  </a>
+                </div>
+              )}
 
               {/* Admin Notes */}
               {selectedDeposit.status === 'pending' && (
