@@ -4,6 +4,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import { createServer } from 'http';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import fs from 'fs';
 import connectDB from './config/database.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
@@ -18,18 +21,27 @@ import gameRoutes from './routes/gameRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { getPublicPolicy } from './controllers/adminController.js';
 import { initializeDefaultConfigs } from './controllers/configController.js';
+import { autoExpireWaitingGames } from './jobs/autoExpireGames.js';
 
 dotenv.config();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const app = express();
 const httpServer = createServer(app);
+
+// Ensure upload directories exist
+const screenshotDir = join(__dirname, 'uploads', 'screenshots');
+if (!fs.existsSync(screenshotDir)) {
+  fs.mkdirSync(screenshotDir, { recursive: true });
+}
 
 // Parse allowed origins from environment variables
 const getAllowedOrigins = () => {
   const origins = [];
   
   if (process.env.CLIENT_URL) {
-    // Split by comma and trim whitespace
     const clientUrls = process.env.CLIENT_URL.split(',').map(url => url.trim());
     origins.push(...clientUrls);
   }
@@ -50,12 +62,17 @@ connectDB();
 // Initialize default configurations
 initializeDefaultConfigs();
 
+// Start background job: auto-expire waiting games with no opponent after 1 minute
+// Runs every 30 seconds so games expire within 60–90 seconds of creation
+setInterval(autoExpireWaitingGames, 30 * 1000);
+// Also run immediately on startup
+setTimeout(autoExpireWaitingGames, 5000);
+
 // Middleware
 app.use(helmet());
 app.use(compression());
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
     if (allowedOrigins.indexOf(origin) !== -1) {
@@ -72,6 +89,9 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static uploaded files (screenshots, etc.)
+app.use('/uploads', express.static(join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);

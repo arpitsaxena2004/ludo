@@ -41,6 +41,14 @@ const withdrawalRequestSchema = new mongoose.Schema({
   processedAt: {
     type: Date,
     default: null
+  },
+  paymentScreenshot: {
+    type: String,
+    default: null
+  },
+  screenshotExpiresAt: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true

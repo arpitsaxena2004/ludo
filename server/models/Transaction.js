@@ -52,7 +52,16 @@ const transactionSchema = new mongoose.Schema({
     accountNumber: String,
     ifscCode: String,
     upiId: String,
-    bankName: String
+    bankName: String,
+    phoneNumber: String
+  },
+  paymentScreenshot: {
+    type: String,
+    default: null
+  },
+  screenshotExpiresAt: {
+    type: Date,
+    default: null
   },
   adminNotes: {
     type: String,

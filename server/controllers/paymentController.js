@@ -72,17 +72,14 @@ export const uploadQRCode = async (req, res) => {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
 
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: 'payment_qr',
-      transformation: [{ width: 500, height: 500, crop: 'limit' }]
-    });
+    const qrCodeUrl = `/uploads/payments/${req.file.filename}`;
 
     let settings = await PaymentSettings.findOne();
     if (!settings) {
       settings = await PaymentSettings.create({});
     }
 
-    settings.qrCode = result.secure_url;
+    settings.qrCode = qrCodeUrl;
     await settings.save();
 
     res.json({
@@ -118,15 +115,12 @@ export const createDepositRequest = async (req, res) => {
       });
     }
 
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: 'deposit_screenshots',
-      transformation: [{ width: 1000, height: 1000, crop: 'limit' }]
-    });
+    const screenshotUrl = `/uploads/payments/${req.file.filename}`;
 
     const depositRequest = await DepositRequest.create({
       user: userId,
       amount,
-      screenshot: result.secure_url,
+      screenshot: screenshotUrl,
       upiTransactionId: upiTransactionId || ''
     });
 
@@ -334,7 +328,7 @@ export const rejectDepositRequest = async (req, res) => {
   }
 };
 
-// Admin: Approve withdrawal request
+// Admin: Approve withdrawal request (with payment screenshot)
 export const approveWithdrawalRequest = async (req, res) => {
   try {
     const { id } = req.params;
@@ -351,11 +345,17 @@ export const approveWithdrawalRequest = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Withdrawal request already processed' });
     }
 
+    // Upload payment screenshot if provided
+    let paymentScreenshotUrl = null;
+    if (req.file) {
+      paymentScreenshotUrl = `/uploads/payments/${req.file.filename}`;
+    }
+
     const user = await User.findById(withdrawalRequest.user._id);
     user.totalWithdrawal += withdrawalRequest.amount;
     await user.save();
 
-    // Create transaction record
+    // Create transaction record with screenshot
     await Transaction.create({
       user: user._id,
       type: 'withdrawal',
@@ -364,6 +364,8 @@ export const approveWithdrawalRequest = async (req, res) => {
       paymentMethod: withdrawalRequest.paymentMethod,
       description: 'Manual withdrawal approved by admin',
       withdrawalDetails: withdrawalRequest.withdrawalDetails,
+      paymentScreenshot: paymentScreenshotUrl,
+      screenshotExpiresAt: paymentScreenshotUrl ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null,
       processedBy: adminId
     });
 
@@ -371,11 +373,15 @@ export const approveWithdrawalRequest = async (req, res) => {
     withdrawalRequest.adminNotes = adminNotes || '';
     withdrawalRequest.processedBy = adminId;
     withdrawalRequest.processedAt = new Date();
+    withdrawalRequest.paymentScreenshot = paymentScreenshotUrl;
+    withdrawalRequest.screenshotExpiresAt = paymentScreenshotUrl
+      ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      : null;
     await withdrawalRequest.save();
 
     res.json({
       success: true,
-      message: 'Withdrawal request approved successfully',
+      message: 'Withdrawal approved successfully',
       data: withdrawalRequest
     });
   } catch (error) {

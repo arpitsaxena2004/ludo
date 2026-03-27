@@ -412,12 +412,9 @@ export const declareGameWinner = async (req, res) => {
       return res.status(404).json({ message: 'Game not found' });
     }
 
-    if (game.status === 'completed') {
-      return res.status(400).json({ message: 'Game already completed' });
-    }
-
-    if (game.status !== 'in_progress') {
-      return res.status(400).json({ message: 'Can only declare winner for games in progress' });
+    // Allow declaring winner for in_progress OR completed games (admin override)
+    if (!['in_progress', 'completed'].includes(game.status)) {
+      return res.status(400).json({ message: 'Can only declare winner for active or completed games' });
     }
 
     // Check if winner is a player in the game

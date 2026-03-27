@@ -11,7 +11,7 @@ const gameSchema = new mongoose.Schema({
   entryFee: {
     type: Number,
     required: true,
-    min: 10
+    min: 50
   },
   prizePool: {
     type: Number,

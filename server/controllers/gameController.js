@@ -30,12 +30,8 @@ export const createGame = async (req, res) => {
   try {
     const { entryFee, gameType = 'ludo' } = req.body;
 
-    if (!entryFee) {
-      return res.status(400).json({ message: 'Entry fee is required' });
-    }
-
-    if (entryFee < 10) {
-      return res.status(400).json({ message: 'Minimum entry fee is ₹10' });
+    if (!entryFee || isNaN(entryFee) || entryFee < 50) {
+      return res.status(400).json({ message: 'Minimum entry amount is ₹50' });
     }
 
     const user = await User.findById(req.user._id);
@@ -241,45 +237,10 @@ export const uploadWinScreenshot = async (req, res) => {
       return res.status(400).json({ message: 'You have already uploaded a screenshot' });
     }
 
-    let screenshotUrl;
+    // Store screenshot as a server-accessible URL path
+    // multer saves file at uploads/screenshots/<filename>
+    const screenshotUrl = `/uploads/screenshots/${req.file.filename}`;
 
-    // Check if Cloudinary is configured
-    if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY) {
-      // Upload to Cloudinary
-      const cloudinary = (await import('../config/cloudinary.js')).default;
-      const fs = (await import('fs')).default;
-
-      try {
-        console.log('Uploading screenshot to Cloudinary...');
-        const result = await cloudinary.uploader.upload(req.file.path, {
-          folder: 'kheloludo/game-screenshots',
-          public_id: `game_${roomCode}_${req.user._id}_${Date.now()}`,
-          transformation: [
-            { width: 1200, height: 1200, crop: 'limit' },
-            { quality: 'auto:good' },
-            { fetch_format: 'auto' }
-          ],
-          resource_type: 'image'
-        });
-
-        console.log('Upload successful:', result.secure_url);
-        screenshotUrl = result.secure_url;
-
-        // Delete temp file
-        fs.unlink(req.file.path, (err) => {
-          if (err) console.log('Failed to delete temp file:', err.message);
-        });
-      } catch (cloudinaryError) {
-        console.error('Cloudinary upload error:', cloudinaryError);
-        // Fallback to local storage
-        screenshotUrl = `/uploads/screenshots/${req.file.filename}`;
-      }
-    } else {
-      console.log('Cloudinary not configured, using local storage');
-      screenshotUrl = `/uploads/screenshots/${req.file.filename}`;
-    }
-
-    // Store screenshot URL
     game.players[playerIndex].winScreenshot = screenshotUrl;
     game.players[playerIndex].uploadedAt = new Date();
 
@@ -308,6 +269,7 @@ export const uploadWinScreenshot = async (req, res) => {
     res.status(500).json({ message: 'Failed to upload screenshot', error: error.message });
   }
 };
+
 
 // @desc    Get user's games
 // @route   GET /api/game/my-games

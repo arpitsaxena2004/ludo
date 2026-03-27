@@ -13,7 +13,7 @@ const createDefaultAdmin = async () => {
 
     // Check if admin already exists
     const existingAdmin = await Admin.findOne({ email: process.env.ADMIN_EMAIL || 'admin@a2zludo.com' });
-    
+
     if (existingAdmin) {
       console.log('Admin user already exists!');
       console.log('Email:', existingAdmin.email);
