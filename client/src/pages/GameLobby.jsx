@@ -8,7 +8,7 @@ import { getCommissionRate } from '../utils/config';
 
 const GameLobby = () => {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user, fetchBalance } = useAuthStore();
   const [entryAmount, setEntryAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [openBattles, setOpenBattles] = useState([]);
@@ -23,9 +23,16 @@ const GameLobby = () => {
   useEffect(() => {
     fetchBattles();
     fetchCommission();
-    const interval = setInterval(fetchBattles, 5000);
-    return () => clearInterval(interval);
-  }, []);
+    fetchBalance(); // Initial balance fetch
+    
+    const battleInterval = setInterval(fetchBattles, 5000);
+    const balanceInterval = setInterval(fetchBalance, 2000); // Update balance every 2 seconds
+    
+    return () => {
+      clearInterval(battleInterval);
+      clearInterval(balanceInterval);
+    };
+  }, [fetchBalance]);
 
   const fetchCommission = async () => {
     const rate = await getCommissionRate();

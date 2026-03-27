@@ -33,6 +33,33 @@ const useAuthStore = create(
         }
       },
       
+      // Fetch wallet balance in real-time
+      fetchBalance: async () => {
+        try {
+          const { token } = get();
+          if (!token) return;
+          
+          const response = await axios.get('/wallet/balance', {
+            baseURL: import.meta.env.VITE_API_URL,
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          if (response.data.success) {
+            const { depositCash, winningCash, bonusCash } = response.data.data;
+            set((state) => ({
+              user: {
+                ...state.user,
+                depositCash,
+                winningCash,
+                bonusCash
+              }
+            }));
+          }
+        } catch (error) {
+          console.error('Failed to fetch balance:', error);
+        }
+      },
+      
       logout: () => set({ user: null, token: null, isAuthenticated: false }),
     }),
     {

@@ -8,7 +8,7 @@ import useAuthStore from '../store/authStore';
 
 const Withdrawal = () => {
   const navigate = useNavigate();
-  const { user, fetchUser } = useAuthStore();
+  const { user, fetchUser, fetchBalance } = useAuthStore();
   const [paymentSettings, setPaymentSettings] = useState(null);
   const [amount, setAmount] = useState('');
   const [selectedAccount, setSelectedAccount] = useState('');
@@ -16,13 +16,19 @@ const Withdrawal = () => {
 
   useEffect(() => {
     fetchPaymentSettings();
+    fetchBalance(); // Initial balance fetch
+    
+    const balanceInterval = setInterval(fetchBalance, 2000); // Update balance every 2 seconds
+    
     // Auto-select first available account
     if (user?.upiId) {
       setSelectedAccount('upi');
     } else if (user?.bankDetails?.accountNumber) {
       setSelectedAccount('bank');
     }
-  }, [user]);
+    
+    return () => clearInterval(balanceInterval);
+  }, [user, fetchBalance]);
 
   const fetchPaymentSettings = async () => {
     try {

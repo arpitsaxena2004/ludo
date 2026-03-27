@@ -7,21 +7,19 @@ import { authAPI } from '../services/api';
 import useAuthStore from '../store/authStore';
 
 const Wallet = () => {
-  const { user, updateUser } = useAuthStore();
+  const { user, updateUser, fetchBalance } = useAuthStore();
   const navigate = useNavigate();
 
-  // Fetch balance on mount
+  // Fetch balance on mount and set up real-time updates
   useEffect(() => {
-    const fetchBalance = async () => {
-      try {
-        const response = await authAPI.getMe();
-        updateUser(response.data.user);
-      } catch (error) {
-        console.error('Failed to fetch balance:', error);
-      }
-    };
-    fetchBalance();
-  }, [updateUser]);
+    fetchBalance(); // Initial fetch
+    
+    const interval = setInterval(() => {
+      fetchBalance();
+    }, 2000); // Update every 2 seconds
+
+    return () => clearInterval(interval);
+  }, [fetchBalance]);
 
   return (
     <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24">

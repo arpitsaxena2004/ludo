@@ -8,14 +8,19 @@ import useAuthStore from '../store/authStore';
 
 const Deposit = () => {
   const navigate = useNavigate();
-  const { user, fetchUser } = useAuthStore();
+  const { user, fetchUser, fetchBalance } = useAuthStore();
   const [paymentSettings, setPaymentSettings] = useState(null);
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchPaymentSettings();
-  }, []);
+    fetchBalance(); // Initial balance fetch
+    
+    const balanceInterval = setInterval(fetchBalance, 2000); // Update balance every 2 seconds
+    
+    return () => clearInterval(balanceInterval);
+  }, [fetchBalance]);
 
   const fetchPaymentSettings = async () => {
     try {

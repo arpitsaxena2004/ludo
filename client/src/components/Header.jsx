@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaBars, FaWallet, FaGift, FaChevronRight, FaUser, FaGamepad, FaHistory, FaHeadset, FaFileAlt, FaArrowLeft, FaArrowDown, FaArrowUp } from 'react-icons/fa';
@@ -7,12 +7,24 @@ import useAuthStore from '../store/authStore';
 import usePWA from '../hooks/usePWA';
 
 const Header = () => {
-  const { user } = useAuthStore();
+  const { user, fetchBalance } = useAuthStore();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [policyOpen, setPolicyOpen] = useState(false);
   
   const { isInstallable, handleInstallClick } = usePWA();
+
+  // Fetch balance in real-time every 3 seconds
+  useEffect(() => {
+    if (user) {
+      fetchBalance(); // Initial fetch
+      const interval = setInterval(() => {
+        fetchBalance();
+      }, 3000); // Update every 3 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [user, fetchBalance]);
 
   const handleMenuItemClick = (path) => {
     setMenuOpen(false);
