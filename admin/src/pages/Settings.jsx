@@ -18,8 +18,6 @@ const Settings = () => {
     referralBonus: 50,
     signupBonus: 50,
     noticeBoard: '',
-    telegramGroup: '',
-    whatsappGroup: '',
     ludoEnabled: true,
     snakeLadderEnabled: true
   });
@@ -52,8 +50,6 @@ const Settings = () => {
         axios.get('/config/referralBonus', { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
         axios.get('/config/signupBonus', { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
         axios.get('/config/noticeBoard', { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('/config/telegramGroup', { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('/config/whatsappGroup', { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
         axios.get('/config/ludoEnabled', { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { data: { value: true } } })),
         axios.get('/config/snakeLadderEnabled', { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { data: { value: true } } }))
       ]);
@@ -63,8 +59,6 @@ const Settings = () => {
         referralBonus: referralRes.data.data?.value || 50,
         signupBonus: signupRes.data.data?.value || 50,
         noticeBoard: noticeRes.data.data?.value || '',
-        telegramGroup: telegramRes.data.data?.value || '',
-        whatsappGroup: whatsappRes.data.data?.value || '',
         ludoEnabled: ludoRes.data.data?.value !== false,
         snakeLadderEnabled: snakeLadderRes.data.data?.value !== false
       });
@@ -129,8 +123,6 @@ const Settings = () => {
         axios.put('/config', { key: 'referralBonus', value: Number(gameSettings.referralBonus), description: 'Referral bonus amount in rupees', category: 'referral' }, { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
         axios.put('/config', { key: 'signupBonus', value: Number(gameSettings.signupBonus), description: 'Signup bonus amount in rupees for new users', category: 'referral' }, { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
         axios.put('/config', { key: 'noticeBoard', value: gameSettings.noticeBoard, description: 'Notice board text displayed on home page', category: 'general' }, { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
-        axios.put('/config', { key: 'telegramGroup', value: gameSettings.telegramGroup, description: 'Telegram group link for support', category: 'general' }, { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
-        axios.put('/config', { key: 'whatsappGroup', value: gameSettings.whatsappGroup, description: 'WhatsApp group link for support', category: 'general' }, { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
         axios.put('/config', { key: 'ludoEnabled', value: gameSettings.ludoEnabled, description: 'Enable or disable Ludo game', category: 'game' }, { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
         axios.put('/config', { key: 'snakeLadderEnabled', value: gameSettings.snakeLadderEnabled, description: 'Enable or disable Snake & Ladder game', category: 'game' }, { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } })
       ]);
@@ -335,30 +327,7 @@ const Settings = () => {
             <p className="text-gray-500 text-xs mt-1">Text displayed in green notice box on home page</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-            <div>
-              <label className="block text-gray-400 text-sm mb-2 font-semibold">Telegram Group Link</label>
-              <input
-                type="text"
-                value={gameSettings.telegramGroup}
-                onChange={(e) => setGameSettings(prev => ({ ...prev, telegramGroup: e.target.value }))}
-                placeholder="https://t.me/yourgroup"
-                className="w-full bg-gray-700 text-white px-4 py-3 rounded-lg outline-none border border-gray-600 focus:border-purple-500"
-              />
-              <p className="text-gray-500 text-xs mt-1">Telegram link for the customer support page</p>
-            </div>
-            <div>
-              <label className="block text-gray-400 text-sm mb-2 font-semibold">WhatsApp Group Link</label>
-              <input
-                type="text"
-                value={gameSettings.whatsappGroup}
-                onChange={(e) => setGameSettings(prev => ({ ...prev, whatsappGroup: e.target.value }))}
-                placeholder="https://wa.me/yourgroup"
-                className="w-full bg-gray-700 text-white px-4 py-3 rounded-lg outline-none border border-gray-600 focus:border-purple-500"
-              />
-              <p className="text-gray-500 text-xs mt-1">WhatsApp link for the customer support page</p>
-            </div>
-          </div>
+          {/* Support links removed - moved to Support page */}
 
           {/* Game Enable/Disable Toggles */}
           <div>

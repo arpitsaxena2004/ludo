@@ -14,52 +14,59 @@ const Support = () => {
   const [reply, setReply] = useState('');
   const [sending, setSending] = useState(false);
 
-  // WhatsApp Config State
-  const [whatsappNumber, setWhatsappNumber] = useState('');
+  // Support Config State
+  const [supportConfig, setSupportConfig] = useState({
+    whatsappSupportNumber: '',
+    telegramGroup: '',
+    whatsappGroup: ''
+  });
   const [savingConfig, setSavingConfig] = useState(false);
 
   useEffect(() => {
     fetchTickets();
-    fetchWhatsappConfig();
+    fetchSupportConfig();
   }, [filter]);
 
   useEffect(() => {
     filterTickets();
   }, [tickets, searchTerm]);
 
-  const fetchWhatsappConfig = async () => {
+  const fetchSupportConfig = async () => {
     try {
       const adminStorage = localStorage.getItem('admin-storage');
       const token = adminStorage ? JSON.parse(adminStorage).state.token : null;
-      const response = await axios.get('/config/whatsappSupportNumber', {
-        baseURL: import.meta.env.VITE_API_URL,
-        headers: { Authorization: `Bearer ${token}` }
+      
+      const [whatsappNumRes, telegramRes, whatsappGroupRes] = await Promise.all([
+        axios.get('/config/whatsappSupportNumber', { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
+        axios.get('/config/telegramGroup', { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
+        axios.get('/config/whatsappGroup', { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } })
+      ]);
+
+      setSupportConfig({
+        whatsappSupportNumber: whatsappNumRes.data?.data?.value || '',
+        telegramGroup: telegramRes.data?.data?.value || '',
+        whatsappGroup: whatsappGroupRes.data?.data?.value || ''
       });
-      if (response.data && response.data.data) {
-        setWhatsappNumber(response.data.data.value || '');
-      }
     } catch (error) {
-      console.error('Failed to fetch whatsapp config');
+      console.error('Failed to fetch support config');
     }
   };
 
-  const handleSaveWhatsappConfig = async () => {
+  const handleSaveSupportConfig = async () => {
     setSavingConfig(true);
     try {
       const adminStorage = localStorage.getItem('admin-storage');
       const token = adminStorage ? JSON.parse(adminStorage).state.token : null;
-      await axios.put('/config', {
-        key: 'whatsappSupportNumber',
-        value: whatsappNumber,
-        description: 'WhatsApp number with country code for the 24/7 floating button',
-        category: 'general'
-      }, {
-        baseURL: import.meta.env.VITE_API_URL,
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      toast.success('WhatsApp support number saved! ✅');
+      
+      await Promise.all([
+        axios.put('/config', { key: 'whatsappSupportNumber', value: supportConfig.whatsappSupportNumber, description: 'WhatsApp number for floating button', category: 'general' }, { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
+        axios.put('/config', { key: 'telegramGroup', value: supportConfig.telegramGroup, description: 'Telegram group link', category: 'general' }, { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } }),
+        axios.put('/config', { key: 'whatsappGroup', value: supportConfig.whatsappGroup, description: 'WhatsApp group link', category: 'general' }, { baseURL: import.meta.env.VITE_API_URL, headers: { Authorization: `Bearer ${token}` } })
+      ]);
+
+      toast.success('Support links saved successfully! ✅');
     } catch (error) {
-      toast.error('Failed to save WhatsApp number');
+      toast.error('Failed to save support config');
     } finally {
       setSavingConfig(false);
     }
@@ -192,28 +199,56 @@ const Support = () => {
       {/* Filters & Search */}
       <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 mb-6">
         {/* Support Settings Section */}
-        <div className="flex flex-col md:flex-row md:items-end gap-3 mb-4 pb-4 border-b border-gray-700">
-          <div className="flex-1">
-            <label className="block text-gray-400 text-sm mb-1 font-semibold flex items-center gap-2">
-              <FaWhatsapp className="text-green-500" /> WhatsApp Support Number
-            </label>
-            <input
-              type="text"
-              value={whatsappNumber}
-              onChange={(e) => setWhatsappNumber(e.target.value)}
-              placeholder="e.g. +919024608772"
-              className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg outline-none border border-gray-600 focus:border-blue-500"
-            />
-            <p className="text-gray-500 text-xs mt-1">This number will be connected to the Floating 24/7 Support icon on the user website.</p>
+        <div className="space-y-4 mb-4 pb-4 border-b border-gray-700">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-gray-400 text-sm mb-1 font-semibold flex items-center gap-2">
+                <FaWhatsapp className="text-green-500" /> Floating WhatsApp No.
+              </label>
+              <input
+                type="text"
+                value={supportConfig.whatsappSupportNumber}
+                onChange={(e) => setSupportConfig(prev => ({ ...prev, whatsappSupportNumber: e.target.value }))}
+                placeholder="e.g. +919024608772"
+                className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg outline-none border border-gray-600 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-400 text-sm mb-1 font-semibold flex items-center gap-2">
+                <FaPaperPlane className="text-blue-400" /> Telegram Group
+              </label>
+              <input
+                type="text"
+                value={supportConfig.telegramGroup}
+                onChange={(e) => setSupportConfig(prev => ({ ...prev, telegramGroup: e.target.value }))}
+                placeholder="https://t.me/yourgroup"
+                className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg outline-none border border-gray-600 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-400 text-sm mb-1 font-semibold flex items-center gap-2">
+                <FaWhatsapp className="text-green-400" /> WhatsApp Group
+              </label>
+              <input
+                type="text"
+                value={supportConfig.whatsappGroup}
+                onChange={(e) => setSupportConfig(prev => ({ ...prev, whatsappGroup: e.target.value }))}
+                placeholder="https://wa.me/yourgroup"
+                className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg outline-none border border-gray-600 focus:border-blue-500"
+              />
+            </div>
           </div>
-          <button
-            onClick={handleSaveWhatsappConfig}
-            disabled={savingConfig}
-            className="flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-          >
-            <FaSave />
-            {savingConfig ? 'Saving...' : 'Save Config'}
-          </button>
+          <div className="flex justify-between items-center">
+            <p className="text-gray-500 text-xs mt-1">These details are shown on the user's Contact/Support page and floating icon.</p>
+            <button
+              onClick={handleSaveSupportConfig}
+              disabled={savingConfig}
+              className="flex items-center justify-center gap-2 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 font-bold"
+            >
+              <FaSave />
+              {savingConfig ? 'Saving...' : 'Save Support Config'}
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-4">
