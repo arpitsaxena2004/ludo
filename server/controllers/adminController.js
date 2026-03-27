@@ -264,6 +264,33 @@ export const deleteUser = async (req, res) => {
   }
 };
 
+// @desc    Reset user password
+// @route   PUT /api/admin/user/:id/reset-password
+// @access  Private (Admin)
+export const resetUserPassword = async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+    }
+
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({ message: 'User password reset successfully' });
+  } catch (error) {
+    console.error('Reset User Password Error:', error);
+    res.status(500).json({ message: 'Failed to reset user password', error: error.message });
+  }
+};
+
 // @desc    Get all transactions
 // @route   GET /api/admin/transactions
 // @access  Private (Admin)
@@ -412,9 +439,9 @@ export const declareGameWinner = async (req, res) => {
       return res.status(404).json({ message: 'Game not found' });
     }
 
-    // Allow declaring winner for in_progress OR completed games (admin override)
-    if (!['in_progress', 'completed'].includes(game.status)) {
-      return res.status(400).json({ message: 'Can only declare winner for active or completed games' });
+    // Allow declaring winner for in_progress OR completed OR disputed games (admin override)
+    if (!['in_progress', 'completed', 'disputed'].includes(game.status)) {
+      return res.status(400).json({ message: 'Can only declare winner for active, completed or disputed games' });
     }
 
     // Check if winner is a player in the game

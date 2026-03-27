@@ -24,7 +24,8 @@ import {
   getPolicy,
   updatePolicy,
   changeAdminPassword,
-  getReports
+  getReports,
+  resetUserPassword
 } from '../controllers/adminController.js';
 import {
   getAllSubAdmins,
@@ -59,6 +60,7 @@ router.get('/user/:id', adminProtect, checkPermission('manage_users'), getUserBy
 router.put('/user/:id/block', adminProtect, checkPermission('manage_users'), blockUser);
 router.put('/user/:id/unblock', adminProtect, checkPermission('manage_users'), unblockUser);
 router.delete('/user/:id', adminProtect, checkPermission('manage_users'), deleteUser);
+router.put('/user/:id/reset-password', adminProtect, checkPermission('manage_users'), resetUserPassword);
 router.post('/users/:userId/add-funds', adminProtect, checkPermission('manage_users'), addFundsToUser);
 router.post('/users/:userId/deduct-funds', adminProtect, checkPermission('manage_users'), deductFundsFromUser);
 

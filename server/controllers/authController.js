@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import AppConfig from '../models/AppConfig.js';
+import Support from '../models/Support.js';
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -224,3 +225,5 @@ export const logout = async (req, res) => {
     res.status(500).json({ message: 'Failed to logout', error: error.message });
   }
 };
+
+

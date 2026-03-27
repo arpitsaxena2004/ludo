@@ -55,7 +55,7 @@ const gameSchema = new mongoose.Schema({
   }],
   status: {
     type: String,
-    enum: ['waiting', 'accepted', 'in_progress', 'completed', 'cancelled', 'rejected'],
+    enum: ['waiting', 'accepted', 'in_progress', 'completed', 'cancelled', 'rejected', 'disputed'],
     default: 'waiting'
   },
   gameRoomCode: {

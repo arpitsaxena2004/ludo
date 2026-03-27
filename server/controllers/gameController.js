@@ -545,9 +545,20 @@ export const submitGameResult = async (req, res) => {
       const allPlayersSubmitted = game.players.every(p => p.result !== null);
       
       if (allPlayersSubmitted) {
-        // Mark game as completed
-        game.status = 'completed';
-        game.completedAt = new Date();
+        const player1Result = game.players[0].result;
+        const player2Result = game.players[1].result;
+
+        if (player1Result === 'won' && player2Result === 'won') {
+          // Conflict: Both claim win
+          game.status = 'disputed';
+        } else if (player1Result === 'lost' && player2Result === 'lost') {
+          // Conflict: Both claim loss (rare but possible)
+          game.status = 'disputed';
+        } else {
+          // One won, one lost - Normal completion
+          game.status = 'completed';
+          game.completedAt = new Date();
+        }
       }
       
       await game.save();
