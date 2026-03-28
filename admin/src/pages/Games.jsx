@@ -105,6 +105,21 @@ const Games = () => {
         </div>
       </div>
 
+      {/* Info Banner for Manual Winner Declaration */}
+      <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-500 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <span className="text-2xl">⚠️</span>
+          <div>
+            <p className="text-orange-400 font-bold mb-1">Manual Winner Declaration</p>
+            <p className="text-gray-300 text-sm">
+              When both players claim they won (upload fake screenshots), you can manually review the screenshots 
+              and declare the actual winner. Click "View Details" on any game, check both screenshots, and use 
+              "🏆 Declare Winner" or "💀 Declare Loser" buttons to resolve disputes.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-gradient-to-br from-purple-600/20 to-purple-800/20 border border-purple-500/30 rounded-xl p-4 lg:p-6">
           <div className="flex items-center gap-3 mb-2">
@@ -275,7 +290,16 @@ const Games = () => {
             </div>
 
             <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700 mb-4">
-              <h4 className="text-white font-semibold text-sm mb-3">Players & Results</h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-white font-semibold text-sm">Players & Results</h4>
+                {/* Dispute Warning */}
+                {selectedGame.players?.filter(p => p.result === 'won').length > 1 && (
+                  <div className="bg-red-500/20 border border-red-500 rounded-lg px-3 py-1 flex items-center gap-2 animate-pulse">
+                    <span className="text-red-400 text-xl">⚠️</span>
+                    <span className="text-red-400 font-bold text-xs">BOTH CLAIMED WIN!</span>
+                  </div>
+                )}
+              </div>
               <div className="space-y-3">
                 {selectedGame.players?.map((player, idx) => {
                   const canDeclare = !selectedGame.winner &&
