@@ -59,7 +59,7 @@ const BattleRoom = () => {
       const startTime = new Date(battle.startedAt).getTime();
       const currentTime = new Date().getTime();
       const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
-      const remainingTime = Math.max(0, 300 - elapsedSeconds); // 5 minutes = 300 seconds
+      const remainingTime = Math.max(0, 1800 - elapsedSeconds); // 30 minutes = 1800 seconds
       
       setTimeLeft(remainingTime);
       
