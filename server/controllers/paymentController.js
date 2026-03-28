@@ -119,13 +119,13 @@ export const createDepositRequest = async (req, res) => {
     // Get the origin from request headers (dynamic domain detection)
     const origin = req.get('origin') || req.get('referer')?.split('/').slice(0, 3).join('/') || process.env.CLIENT_URL;
     
-    // Create payment order with gateway
+    // Create payment order with gateway - Add order_id to redirect URL
     const paymentResponse = await createPaymentOrder({
       customerMobile: user.phoneNumber,
       customerName: user.username || user.phoneNumber,
       amount,
       orderId,
-      redirectUrl: `${origin}/payment-success`,
+      redirectUrl: `${origin}/payment-success?order_id=${orderId}`,
       remark1: `Deposit by ${user.username}`,
       remark2: userId.toString()
     });
@@ -182,13 +182,14 @@ export const testPaymentGateway = async (req, res) => {
   try {
     // Get the origin from request headers (dynamic domain detection)
     const origin = req.get('origin') || req.get('referer')?.split('/').slice(0, 3).join('/') || process.env.CLIENT_URL;
+    const testOrderId = `TEST${Date.now()}`;
     
     const testOrder = {
       customerMobile: '9999999999',
       customerName: 'Test User',
       amount: 1,
-      orderId: `TEST${Date.now()}`,
-      redirectUrl: `${origin}/payment-success`,
+      orderId: testOrderId,
+      redirectUrl: `${origin}/payment-success?order_id=${testOrderId}`,
       remark1: 'Test payment',
       remark2: 'Testing'
     };
@@ -213,29 +214,57 @@ export const testPaymentGateway = async (req, res) => {
 // Webhook handler for payment gateway
 export const handlePaymentWebhook = async (req, res) => {
   try {
-    const { status, order_id, customer_mobile, amount, remark1, remark2 } = req.body;
+    const { status, order_id, customer_mobile, amount, remark1, remark2, utr } = req.body;
 
-    console.log('Payment webhook received:', req.body);
+    console.log('=== PAYMENT WEBHOOK RECEIVED ===');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Webhook Data:', JSON.stringify(req.body, null, 2));
+    console.log('================================');
 
     // Find deposit request by order ID
     const depositRequest = await DepositRequest.findOne({ orderId: order_id });
 
     if (!depositRequest) {
-      console.error('Deposit request not found for order:', order_id);
+      console.error('❌ Deposit request not found for order:', order_id);
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
+    console.log('✅ Deposit request found:', {
+      orderId: depositRequest.orderId,
+      userId: depositRequest.user,
+      amount: depositRequest.amount,
+      currentStatus: depositRequest.status
+    });
+
     if (status === 'SUCCESS' || status === 'success') {
+      // Check if already processed
+      if (depositRequest.status === 'approved') {
+        console.log('⚠️ Payment already processed for order:', order_id);
+        return res.json({ success: true, message: 'Payment already processed' });
+      }
+
       // Update deposit request status
       depositRequest.status = 'approved';
+      depositRequest.utr = utr || '';
       depositRequest.processedAt = new Date();
       await depositRequest.save();
+
+      console.log('✅ Deposit request updated to approved');
 
       // Add amount to user's deposit cash
       const user = await User.findById(depositRequest.user);
       if (user) {
+        const oldBalance = user.depositCash;
         user.depositCash += depositRequest.amount;
         await user.save();
+
+        console.log('✅ User balance updated:', {
+          userId: user._id,
+          username: user.username,
+          oldBalance,
+          newBalance: user.depositCash,
+          addedAmount: depositRequest.amount
+        });
 
         // Create transaction record
         await Transaction.create({
@@ -245,22 +274,35 @@ export const handlePaymentWebhook = async (req, res) => {
           status: 'completed',
           paymentMethod: 'gateway',
           description: 'Automatic deposit via payment gateway',
-          orderId: order_id
+          orderId: order_id,
+          utr: utr || ''
         });
 
-        console.log(`Deposit approved automatically for user ${user._id}, amount: ₹${depositRequest.amount}`);
+        console.log('✅ Transaction record created');
+        console.log('=== PAYMENT PROCESSED SUCCESSFULLY ===');
+      } else {
+        console.error('❌ User not found:', depositRequest.user);
       }
 
       return res.json({ success: true, message: 'Payment processed successfully' });
-    } else {
-      // Payment failed or pending
-      depositRequest.status = status === 'PENDING' ? 'processing' : 'rejected';
+    } else if (status === 'PENDING' || status === 'pending') {
+      // Payment pending
+      depositRequest.status = 'processing';
       await depositRequest.save();
-
-      return res.json({ success: true, message: 'Payment status updated' });
+      console.log('⏳ Payment status: PENDING');
+      return res.json({ success: true, message: 'Payment pending' });
+    } else {
+      // Payment failed
+      depositRequest.status = 'rejected';
+      await depositRequest.save();
+      console.log('❌ Payment status: FAILED');
+      return res.json({ success: true, message: 'Payment failed' });
     }
   } catch (error) {
-    console.error('Webhook error:', error);
+    console.error('=== WEBHOOK ERROR ===');
+    console.error('Error:', error.message);
+    console.error('Stack:', error.stack);
+    console.error('=====================');
     res.status(500).json({ success: false, message: error.message });
   }
 };
