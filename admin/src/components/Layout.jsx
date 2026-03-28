@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
   FaHome, FaUsers, FaGamepad, 
   FaCog, FaSignOutAlt, FaBars, FaTimes, FaChevronDown, FaFileAlt, FaSlidersH,
-  FaDownload, FaUpload, FaChartLine, FaUserShield
+  FaDownload, FaUpload, FaChartLine, FaUserShield, FaHeadset
 } from 'react-icons/fa';
 import useAdminStore from '../store/adminStore';
 import { useNavigate } from 'react-router-dom';
@@ -34,6 +34,7 @@ const Layout = () => {
     { path: '/deposits', icon: FaDownload, label: 'Deposits', permission: 'manage_deposits' },
     { path: '/withdrawals', icon: FaUpload, label: 'Withdrawals', permission: 'manage_withdrawals' },
     { path: '/games', icon: FaGamepad, label: 'Games', permission: 'manage_games' },
+    { path: '/support', icon: FaHeadset, label: 'Support', permission: 'manage_support' },
     { path: '/reports', icon: FaChartLine, label: 'Reports', permission: 'view_analytics' },
     { path: '/sub-admins', icon: FaUserShield, label: 'Sub-Admins', permission: 'manage_admins' },
   ].filter(item => !item.permission || hasPermission(item.permission));
