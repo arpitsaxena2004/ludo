@@ -262,8 +262,8 @@ const Games = () => {
       )}
 
       {selectedGame && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={() => setSelectedGame(null)}>
-          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 w-full max-w-2xl border border-gray-700 shadow-2xl my-8" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedGame(null)}>
+          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-gray-700 shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-white flex items-center gap-2">
                 <FaGamepad className="text-purple-400" />
@@ -301,115 +301,134 @@ const Games = () => {
                 )}
               </div>
               <div className="space-y-3">
-                {selectedGame.players?.map((player, idx) => {
-                  const canDeclare = !selectedGame.winner &&
-                    (selectedGame.status === 'in_progress' || selectedGame.status === 'completed');
-
-                  return (
-                    <div key={idx} className="bg-gray-700/50 rounded-lg p-3 border border-gray-600">
-                      <div className="flex items-center justify-between gap-3 mb-3">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                            {idx + 1}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-white font-semibold text-sm truncate">{player.user?.username || player.user?.phoneNumber}</p>
-                            <p className="text-gray-400 text-xs">{player.user?.phoneNumber}</p>
-                          </div>
+                {selectedGame.players?.map((player, idx) => (
+                  <div key={idx} className="bg-gray-700/50 rounded-lg p-3 border border-gray-600">
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                          {idx + 1}
                         </div>
-
-                        {/* Result Badge */}
-                        {player.result ? (
-                          <span className={`px-2 py-1 rounded text-xs font-bold ${player.result === 'won' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
-                            {player.result === 'won' ? '✓ Won' : '✕ Lost'}
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 rounded text-xs font-bold bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
-                            ⏳ No Result
-                          </span>
-                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-semibold text-sm truncate">{player.user?.username || player.user?.phoneNumber}</p>
+                          <p className="text-gray-400 text-xs">{player.user?.phoneNumber}</p>
+                        </div>
                       </div>
 
-                      {/* Screenshot Preview */}
-                      {player.winScreenshot && (
-                        <div className="mb-3">
-                          <p className="text-gray-400 text-xs mb-1 flex items-center gap-1">
-                            <FaImage className="text-blue-400" />
-                            Win Screenshot
-                            {player.uploadedAt && (
-                              <span className="ml-auto text-yellow-400 font-semibold">
-                                Uploaded: {new Date(player.uploadedAt).toLocaleString('en-IN', {
-                                  day: '2-digit', month: 'short', year: 'numeric',
-                                  hour: '2-digit', minute: '2-digit', second: '2-digit',
-                                  hour12: true, timeZone: 'Asia/Kolkata'
-                                })} IST
-                              </span>
-                            )}
-                          </p>
-                          <div className="bg-gray-900 rounded-lg p-2 border border-gray-600">
-                            <a
-                              href={player.winScreenshot.startsWith('http') 
+                      {/* Result Badge */}
+                      {player.result ? (
+                        <span className={`px-2 py-1 rounded text-xs font-bold ${player.result === 'won' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
+                          {player.result === 'won' ? '✓ Won' : '✕ Lost'}
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 rounded text-xs font-bold bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                          ⏳ No Result
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Screenshot Preview */}
+                    {player.winScreenshot && (
+                      <div className="mb-3">
+                        <p className="text-gray-400 text-xs mb-1 flex items-center gap-1">
+                          <FaImage className="text-blue-400" />
+                          Win Screenshot
+                          {player.uploadedAt && (
+                            <span className="ml-auto text-yellow-400 font-semibold">
+                              Uploaded: {new Date(player.uploadedAt).toLocaleString('en-IN', {
+                                day: '2-digit', month: 'short', year: 'numeric',
+                                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                                hour12: true, timeZone: 'Asia/Kolkata'
+                              })} IST
+                            </span>
+                          )}
+                        </p>
+                        <div className="bg-gray-900 rounded-lg p-2 border border-gray-600">
+                          <a
+                            href={player.winScreenshot.startsWith('http') 
+                              ? player.winScreenshot 
+                              : `${import.meta.env.VITE_API_URL.replace('/api', '')}${player.winScreenshot}`
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block"
+                          >
+                            <img
+                              src={player.winScreenshot.startsWith('http') 
                                 ? player.winScreenshot 
                                 : `${import.meta.env.VITE_API_URL.replace('/api', '')}${player.winScreenshot}`
                               }
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block"
-                            >
-                              <img
-                                src={player.winScreenshot.startsWith('http') 
-                                  ? player.winScreenshot 
-                                  : `${import.meta.env.VITE_API_URL.replace('/api', '')}${player.winScreenshot}`
-                                }
-                                alt="Win Screenshot"
-                                className="w-full rounded-lg object-contain max-h-64 hover:opacity-90 transition-opacity cursor-pointer"
-                                onError={(e) => { 
-                                  e.target.style.display = 'none';
-                                  e.target.nextSibling.style.display = 'block';
-                                }}
-                              />
-                              <div style={{ display: 'none' }} className="text-center py-8 text-gray-400">
-                                <FaImage className="text-4xl mx-auto mb-2" />
-                                <p>Failed to load image</p>
-                              </div>
-                            </a>
-                          </div>
-                          <p className="text-gray-500 text-[10px] mt-1 text-center">Click image to open full size ↗</p>
+                              alt="Win Screenshot"
+                              className="w-full rounded-lg object-contain max-h-64 hover:opacity-90 transition-opacity cursor-pointer"
+                              onError={(e) => { 
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'block';
+                              }}
+                            />
+                            <div style={{ display: 'none' }} className="text-center py-8 text-gray-400">
+                              <FaImage className="text-4xl mx-auto mb-2" />
+                              <p>Failed to load image</p>
+                            </div>
+                          </a>
                         </div>
-                      )}
+                        <p className="text-gray-500 text-[10px] mt-1 text-center">Click image to open full size ↗</p>
+                      </div>
+                    )}
 
-                      {/* Admin Action Buttons */}
-                      {canDeclare && (
-                        <div className="flex gap-2 flex-wrap">
-                          <button
-                            onClick={() => handleDeclareWinner(player.user._id)}
-                            disabled={declaring}
-                            className="flex items-center gap-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50 shadow-lg shadow-green-500/20"
-                          >
-                            <FaTrophy className="text-xs" />
-                            {declaring ? '...' : '🏆 Declare Winner'}
-                          </button>
-                          <button
-                            onClick={() => handleDeclareLoser(player.user._id)}
-                            disabled={declaring}
-                            className="flex items-center gap-1 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50 shadow-lg shadow-red-500/20"
-                          >
-                            {declaring ? '...' : '💀 Declare Loser'}
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Already declared */}
-                      {selectedGame.winner && selectedGame.winner._id === player.user._id && (
-                        <div className="mt-2 flex items-center gap-1 text-yellow-400 text-xs font-bold">
-                          <FaTrophy /> Declared Winner — Prize Credited
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                    {/* Already declared winner badge */}
+                    {selectedGame.winner && selectedGame.winner._id === player.user._id && (
+                      <div className="mt-2 bg-yellow-500/20 border border-yellow-500 rounded-lg p-2 flex items-center gap-2 text-yellow-400 text-xs font-bold">
+                        <FaTrophy /> Declared Winner — Prize Credited
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
+
+            {/* Manual Winner Declaration Section - Always visible when no winner declared and results exist */}
+            {!selectedGame.winner && selectedGame.players?.some(p => p.result) && (
+              <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 border-2 border-orange-500 rounded-xl p-4 mb-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-2xl">⚖️</span>
+                  <h4 className="text-orange-400 font-bold">Manual Winner Declaration</h4>
+                </div>
+                <p className="text-gray-300 text-sm mb-4">
+                  Review the screenshots above and declare the actual winner. This will credit the prize to the winner's wallet.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {selectedGame.players?.map((player, idx) => (
+                    <div key={idx} className="bg-gray-800/50 rounded-lg p-3 border border-gray-600">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                          {idx + 1}
+                        </div>
+                        <div>
+                          <p className="text-white font-semibold text-sm">{player.user?.username || player.user?.phoneNumber}</p>
+                          <p className="text-gray-400 text-xs">{player.user?.phoneNumber}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleDeclareWinner(player.user._id)}
+                          disabled={declaring}
+                          className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 py-3 rounded-lg text-sm font-bold transition-all disabled:opacity-50 shadow-lg shadow-green-500/30"
+                        >
+                          <FaTrophy className="text-base" />
+                          {declaring ? 'Processing...' : 'Winner'}
+                        </button>
+                        <button
+                          onClick={() => handleDeclareLoser(player.user._id)}
+                          disabled={declaring}
+                          className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white px-4 py-3 rounded-lg text-sm font-bold transition-all disabled:opacity-50 shadow-lg shadow-red-500/30"
+                        >
+                          {declaring ? 'Processing...' : 'Loser'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {selectedGame.winner && (
               <div className="bg-green-600/20 border border-green-500/30 rounded-lg p-3 mb-4">
