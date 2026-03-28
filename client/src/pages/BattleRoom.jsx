@@ -10,7 +10,7 @@ import { addTimestampToImage } from '../utils/addTimestampToImage';
 const BattleRoom = () => {
   const { roomCode } = useParams();
   const navigate = useNavigate();
-  const { user, fetchBalance } = useAuthStore();
+  const { user, fetchUser } = useAuthStore();
   const [battle, setBattle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [screenshot, setScreenshot] = useState(null);
@@ -31,14 +31,11 @@ const BattleRoom = () => {
 
   useEffect(() => {
     fetchBattleDetails();
-    fetchBalance(); // Initial balance fetch
     
     const battleInterval = setInterval(fetchBattleDetails, 3000);
-    const balanceInterval = setInterval(fetchBalance, 2000); // Update balance every 2 seconds
     
     return () => {
       clearInterval(battleInterval);
-      clearInterval(balanceInterval);
     };
   }, [roomCode]);
 

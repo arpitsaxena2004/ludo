@@ -7,24 +7,24 @@ import useAuthStore from '../store/authStore';
 import usePWA from '../hooks/usePWA';
 
 const Header = () => {
-  const { user, fetchBalance } = useAuthStore();
+  const { user, fetchUser } = useAuthStore();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [policyOpen, setPolicyOpen] = useState(false);
   
   const { isInstallable, handleInstallClick } = usePWA();
 
-  // Fetch balance in real-time every 3 seconds
+  // Fetch user data in real-time every 3 seconds
   useEffect(() => {
     if (user) {
-      fetchBalance(); // Initial fetch
+      fetchUser(); // Initial fetch on mount
       const interval = setInterval(() => {
-        fetchBalance();
+        fetchUser(); // Fetch complete user data instead of just balance
       }, 3000); // Update every 3 seconds
 
       return () => clearInterval(interval);
     }
-  }, [user, fetchBalance]);
+  }, [user, fetchUser]);
 
   const handleMenuItemClick = (path) => {
     setMenuOpen(false);
