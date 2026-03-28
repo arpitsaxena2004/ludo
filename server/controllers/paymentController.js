@@ -116,13 +116,16 @@ export const createDepositRequest = async (req, res) => {
     // Generate unique order ID
     const orderId = `ORD${Date.now()}${Math.floor(Math.random() * 1000)}`;
     
+    // Get the origin from request headers (dynamic domain detection)
+    const origin = req.get('origin') || req.get('referer')?.split('/').slice(0, 3).join('/') || process.env.CLIENT_URL;
+    
     // Create payment order with gateway
     const paymentResponse = await createPaymentOrder({
       customerMobile: user.phoneNumber,
       customerName: user.username || user.phoneNumber,
       amount,
       orderId,
-      redirectUrl: `${process.env.CLIENT_URL}/payment-success`,
+      redirectUrl: `${origin}/payment-success`,
       remark1: `Deposit by ${user.username}`,
       remark2: userId.toString()
     });
@@ -177,12 +180,15 @@ export const getUserDepositRequests = async (req, res) => {
 // Test payment gateway connection (for debugging)
 export const testPaymentGateway = async (req, res) => {
   try {
+    // Get the origin from request headers (dynamic domain detection)
+    const origin = req.get('origin') || req.get('referer')?.split('/').slice(0, 3).join('/') || process.env.CLIENT_URL;
+    
     const testOrder = {
       customerMobile: '9999999999',
       customerName: 'Test User',
       amount: 1,
       orderId: `TEST${Date.now()}`,
-      redirectUrl: `${process.env.CLIENT_URL}/payment-success`,
+      redirectUrl: `${origin}/payment-success`,
       remark1: 'Test payment',
       remark2: 'Testing'
     };

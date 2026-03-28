@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['logo.png'],
       manifest: {
-        name: 'A2Z Ludo',
-        short_name: 'A2Z Ludo',
+        name: 'Kheloludo',
+        short_name: 'Kheloludo',
         description: 'Turn Fun Into Funds! Play Ludo and win real money.',
         theme_color: '#000000',
         background_color: '#000000',
