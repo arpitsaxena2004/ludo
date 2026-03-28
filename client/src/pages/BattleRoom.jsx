@@ -22,6 +22,7 @@ const BattleRoom = () => {
   const [showLostConfirm, setShowLostConfirm] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [hasSubmittedResult, setHasSubmittedResult] = useState(false);
+  const [showCancelRequestDialog, setShowCancelRequestDialog] = useState(false);
   const fileInputRef = useRef(null);
 
   // Language toggle for instructions
@@ -48,6 +49,23 @@ const BattleRoom = () => {
       }
     }
   }, [battle?.status, battle?.winner?._id, user?.id, roomCode]);
+
+  // Check if cancellation request was rejected
+  useEffect(() => {
+    if (battle?.cancellationRequest && 
+        battle.cancellationRequest.status === 'rejected' &&
+        battle.cancellationRequest.requestedBy === user?.id) {
+      
+      const rejectionKey = `cancel_rejected_${roomCode}_${battle.cancellationRequest.respondedAt}`;
+      if (!sessionStorage.getItem(rejectionKey)) {
+        toast.error('Your cancellation request was rejected by opponent. Game continues.', {
+          duration: 5000,
+          icon: '❌'
+        });
+        sessionStorage.setItem(rejectionKey, 'true');
+      }
+    }
+  }, [battle?.cancellationRequest?.status, battle?.cancellationRequest?.requestedBy, user?.id, roomCode]);
 
   // Timer countdown
   useEffect(() => {
@@ -150,11 +168,37 @@ const BattleRoom = () => {
     setShowCancelReasons(false);
     
     try {
-      const response = await gameAPI.cancelGame(roomCode);
-      toast.success(`Battle cancelled! Reason: ${reason}. ₹${response.data.refundedAmount} refunded to your wallet`);
-      navigate('/game-lobby');
+      // Check if game has started (both players joined)
+      if (battle.currentPlayers === 2 && (battle.status === 'in_progress' || battle.status === 'accepted')) {
+        // Request mutual cancellation
+        await gameAPI.requestCancellation(roomCode);
+        toast.success('Cancellation request sent to opponent. Waiting for response...');
+      } else {
+        // Direct cancel (only creator, before second player joins)
+        const response = await gameAPI.cancelGame(roomCode);
+        toast.success(`Battle cancelled! Reason: ${reason}. ₹${response.data.refundedAmount} refunded to your wallet`);
+        navigate('/game-lobby');
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to cancel battle');
+    }
+  };
+
+  const handleRespondToCancellation = async (accept) => {
+    try {
+      const response = await gameAPI.respondToCancellation(roomCode, accept);
+      
+      if (accept) {
+        toast.success(`Game cancelled by mutual agreement! ₹${response.data.refundedAmount} refunded to your wallet`);
+        navigate('/game-lobby');
+      } else {
+        toast.success('Cancellation request rejected. Game continues.');
+        setShowCancelRequestDialog(false);
+      }
+      
+      fetchBattleDetails();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to respond');
     }
   };
 
@@ -181,6 +225,20 @@ const BattleRoom = () => {
       toast.error(error.response?.data?.message || 'Failed to submit result');
     }
   };
+
+  // Check if there's a pending cancellation request from opponent
+  const hasPendingCancellationRequest = battle?.cancellationRequest && 
+    battle.cancellationRequest.status === 'pending' &&
+    battle.cancellationRequest.requestedBy !== user?.id;
+  
+  // Show cancellation request dialog
+  useEffect(() => {
+    if (hasPendingCancellationRequest) {
+      setShowCancelRequestDialog(true);
+    } else {
+      setShowCancelRequestDialog(false);
+    }
+  }, [hasPendingCancellationRequest]);
 
   if (loading) {
     return (
@@ -211,14 +269,8 @@ const BattleRoom = () => {
   const hasUploadedScreenshot = currentPlayer?.winScreenshot;
   const isCreator = battle.players?.[0]?.user._id === user?.id;
   
-  // Allow cancel if:
-  // 1. Game is in waiting or accepted status (before game starts)
-  // 2. OR if game room code is not set yet (game hasn't started)
-  // 3. AND user hasn't submitted result yet
-  const canCancel = (
-    (battle.status === 'waiting' || battle.status === 'accepted' || !battle.gameRoomCode) && 
-    !hasSubmittedResult
-  );
+  // Cancel button is always enabled during game (except when result submitted)
+  const canCancel = !hasSubmittedResult && battle.status !== 'completed' && battle.status !== 'cancelled';
   
   const player1 = battle.players?.[0];
   const player2 = battle.players?.[1];
@@ -387,7 +439,16 @@ const BattleRoom = () => {
         {battle.status === 'completed' ? (
           <div className="bg-green-50 border-2 border-green-300 rounded-xl p-4 text-center">
             <p className="text-green-700 font-bold text-lg mb-2">✅ Game Completed</p>
-            <p className="text-green-600 text-sm">Both players have submitted their results. Admin will review and declare the winner.</p>
+            <p className="text-green-600 text-sm">
+              {battle.winner 
+                ? `Winner declared! ${battle.winner.username || battle.winner.phoneNumber} won ₹${battle.prizePool.toFixed(1)}`
+                : 'Results submitted. Winner will be announced soon.'}
+            </p>
+          </div>
+        ) : battle.status === 'disputed' ? (
+          <div className="bg-orange-50 border-2 border-orange-300 rounded-xl p-4 text-center">
+            <p className="text-orange-700 font-bold text-lg mb-2">⚠️ Dispute Occurred</p>
+            <p className="text-orange-600 text-sm">Both players have chosen the same result. Admin will review and decide the winner.</p>
           </div>
         ) : hasSubmittedResult ? (
           <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-4 text-center mb-4">
@@ -598,6 +659,48 @@ const BattleRoom = () => {
                 className="w-full bg-gray-100 text-gray-600 py-3 rounded-xl font-bold hover:bg-gray-200 transition-all"
               >
                 Close
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Cancellation Request Dialog */}
+      {showCancelRequestDialog && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border-2 border-orange-500"
+          >
+            <div className="text-center mb-6">
+              <div className="text-5xl mb-3">⚠️</div>
+              <h2 className="text-2xl font-black text-gray-800 mb-2">
+                Cancellation Request
+              </h2>
+              <p className="text-gray-600">
+                Your opponent wants to cancel this game. Both players will be refunded if you accept.
+              </p>
+            </div>
+
+            <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-4 mb-6">
+              <p className="text-blue-800 text-sm font-semibold">
+                ℹ️ If you accept, both players will get ₹{battle.entryFee} refunded to their wallets.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleRespondToCancellation(true)}
+                className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 rounded-xl font-bold hover:scale-105 transition-all shadow-lg"
+              >
+                ✓ Accept
+              </button>
+              <button
+                onClick={() => handleRespondToCancellation(false)}
+                className="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white py-3 rounded-xl font-bold hover:scale-105 transition-all shadow-lg"
+              >
+                ✕ Reject
               </button>
             </div>
           </motion.div>

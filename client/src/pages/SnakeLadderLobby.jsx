@@ -40,7 +40,7 @@ const SnakeLadderLobby = () => {
       const response = await gameAPI.getAvailableGames('snakeLadder');
       const games = response.data.games || [];
       setOpenBattles(games.filter(g => g.status === 'waiting'));
-      setRunningBattles(games.filter(g => g.status === 'accepted' || g.status === 'in_progress'));
+      setRunningBattles(games.filter(g => g.status === 'accepted' || g.status === 'in_progress' || g.status === 'disputed'));
     } catch (error) {
       console.error('Failed to fetch battles:', error);
     }
@@ -408,9 +408,15 @@ const SnakeLadderLobby = () => {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-orange-500/20 border border-orange-500 rounded-xl p-2 text-center">
-                      <p className="text-orange-400 font-bold text-sm">🔴 LIVE</p>
-                    </div>
+                    {battle.status === 'disputed' ? (
+                      <div className="flex-1 bg-orange-500/20 border border-orange-500 rounded-xl p-2 text-center">
+                        <p className="text-orange-400 font-bold text-sm">⚠️ DISPUTED</p>
+                      </div>
+                    ) : (
+                      <div className="flex-1 bg-orange-500/20 border border-orange-500 rounded-xl p-2 text-center">
+                        <p className="text-orange-400 font-bold text-sm">🔴 LIVE</p>
+                      </div>
+                    )}
                     {isMyBattle && (
                       <button
                         onClick={() => navigate(`/snake-battle/${battle.roomCode}`)}

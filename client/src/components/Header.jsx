@@ -14,17 +14,18 @@ const Header = () => {
   
   const { isInstallable, handleInstallClick } = usePWA();
 
-  // Fetch user data in real-time every 3 seconds
+  // Fetch user data in real-time every 5 seconds
   useEffect(() => {
-    if (user) {
-      fetchUser(); // Initial fetch on mount
-      const interval = setInterval(() => {
-        fetchUser(); // Fetch complete user data instead of just balance
-      }, 3000); // Update every 3 seconds
+    if (!user) return;
+    
+    fetchUser(); // Initial fetch on mount
+    
+    const interval = setInterval(() => {
+      fetchUser(); // Fetch complete user data
+    }, 5000); // Update every 5 seconds
 
-      return () => clearInterval(interval);
-    }
-  }, [user, fetchUser]);
+    return () => clearInterval(interval);
+  }, []); // Empty dependency array to prevent infinite loop
 
   const handleMenuItemClick = (path) => {
     setMenuOpen(false);

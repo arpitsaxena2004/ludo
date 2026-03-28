@@ -17,12 +17,55 @@ const SnakeLadderGame = () => {
   const [screenshotPreview, setScreenshotPreview] = useState('');
   const [uploading, setUploading] = useState(false);
   const [roomCodeInput, setRoomCodeInput] = useState('');
-  const [timeLeft, setTimeLeft] = useState(300);
+  const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes
   const [showCancelReasons, setShowCancelReasons] = useState(false);
   const [showLostConfirm, setShowLostConfirm] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [hasSubmittedResult, setHasSubmittedResult] = useState(false);
+  const [showCancelRequestDialog, setShowCancelRequestDialog] = useState(false);
+  const [showWinCelebration, setShowWinCelebration] = useState(false);
   const fileInputRef = useRef(null);
+
+  // Check if there's a pending cancellation request from opponent
+  const hasPendingCancellationRequest = battle?.cancellationRequest && 
+    battle.cancellationRequest.status === 'pending' &&
+    battle.cancellationRequest.requestedBy !== user?.id;
+  
+  // Show cancellation request dialog
+  useEffect(() => {
+    if (hasPendingCancellationRequest) {
+      setShowCancelRequestDialog(true);
+    } else {
+      setShowCancelRequestDialog(false);
+    }
+  }, [hasPendingCancellationRequest]);
+
+  // Check for winner celebration
+  useEffect(() => {
+    if (battle?.status === 'completed' && battle?.winner?._id === user?.id) {
+      if (!sessionStorage.getItem(`win_celebrated_${roomCode}`)) {
+        setShowWinCelebration(true);
+        sessionStorage.setItem(`win_celebrated_${roomCode}`, 'true');
+      }
+    }
+  }, [battle?.status, battle?.winner?._id, user?.id, roomCode]);
+
+  // Check if cancellation request was rejected
+  useEffect(() => {
+    if (battle?.cancellationRequest && 
+        battle.cancellationRequest.status === 'rejected' &&
+        battle.cancellationRequest.requestedBy === user?.id) {
+      
+      const rejectionKey = `cancel_rejected_${roomCode}_${battle.cancellationRequest.respondedAt}`;
+      if (!sessionStorage.getItem(rejectionKey)) {
+        toast.error('Your cancellation request was rejected by opponent. Game continues.', {
+          duration: 5000,
+          icon: '❌'
+        });
+        sessionStorage.setItem(rejectionKey, 'true');
+      }
+    }
+  }, [battle?.cancellationRequest?.status, battle?.cancellationRequest?.requestedBy, user?.id, roomCode]);
 
   useEffect(() => {
     fetchBattleDetails();
@@ -35,7 +78,7 @@ const SnakeLadderGame = () => {
       const startTime = new Date(battle.startedAt).getTime();
       const currentTime = new Date().getTime();
       const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
-      const remainingTime = Math.max(0, 300 - elapsedSeconds);
+      const remainingTime = Math.max(0, 1800 - elapsedSeconds); // 30 minutes = 1800 seconds
       setTimeLeft(remainingTime);
       if (remainingTime > 0) {
         const timer = setTimeout(() => setTimeLeft(remainingTime - 1), 1000);
@@ -94,11 +137,37 @@ const SnakeLadderGame = () => {
   const handleCancelBattle = async () => {
     setShowCancelReasons(false);
     try {
-      const response = await gameAPI.cancelGame(roomCode);
-      toast.success(`Battle cancelled! ₹${response.data.refundedAmount} refunded`);
-      navigate('/snake-ladder-lobby');
+      // Check if game has started (both players joined)
+      if (battle.currentPlayers === 2 && (battle.status === 'in_progress' || battle.status === 'accepted')) {
+        // Request mutual cancellation
+        await gameAPI.requestCancellation(roomCode);
+        toast.success('Cancellation request sent to opponent. Waiting for response...');
+      } else {
+        // Direct cancel (only creator, before second player joins)
+        const response = await gameAPI.cancelGame(roomCode);
+        toast.success(`Battle cancelled! ₹${response.data.refundedAmount} refunded`);
+        navigate('/snake-ladder-lobby');
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to cancel battle');
+    }
+  };
+
+  const handleRespondToCancellation = async (accept) => {
+    try {
+      const response = await gameAPI.respondToCancellation(roomCode, accept);
+      
+      if (accept) {
+        toast.success(`Game cancelled by mutual agreement! ₹${response.data.refundedAmount} refunded to your wallet`);
+        navigate('/snake-ladder-lobby');
+      } else {
+        toast.success('Cancellation request rejected. Game continues.');
+        setShowCancelRequestDialog(false);
+      }
+      
+      fetchBattleDetails();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to respond');
     }
   };
 
@@ -135,7 +204,10 @@ const SnakeLadderGame = () => {
   const isPlayer = battle.players?.some(p => p.user._id === user?.id);
   const currentPlayer = battle.players?.find(p => p.user._id === user?.id);
   const isCreator = battle.players?.[0]?.user._id === user?.id;
-  const canCancel = battle.currentPlayers < 2 || battle.status === 'waiting';
+  
+  // Cancel button is always enabled during game (except when result submitted)
+  const canCancel = !hasSubmittedResult && battle.status !== 'completed' && battle.status !== 'cancelled';
+  
   const player1 = battle.players?.[0];
   const player2 = battle.players?.[1];
 
@@ -228,7 +300,16 @@ const SnakeLadderGame = () => {
         {battle.status === 'completed' ? (
           <div className="bg-green-50 border-2 border-green-300 rounded-xl p-4 text-center">
             <p className="text-green-700 font-bold text-lg mb-2">✅ Game Completed</p>
-            <p className="text-green-600 text-sm">Both players submitted. Admin will declare the winner.</p>
+            <p className="text-green-600 text-sm">
+              {battle.winner 
+                ? `Winner declared! ${battle.winner.username || battle.winner.phoneNumber} won ₹${battle.prizePool.toFixed(1)}`
+                : 'Results submitted. Winner will be announced soon.'}
+            </p>
+          </div>
+        ) : battle.status === 'disputed' ? (
+          <div className="bg-orange-50 border-2 border-orange-300 rounded-xl p-4 text-center">
+            <p className="text-orange-700 font-bold text-lg mb-2">⚠️ Dispute Occurred</p>
+            <p className="text-orange-600 text-sm">Both players have chosen the same result. Admin will review and decide the winner.</p>
           </div>
         ) : hasSubmittedResult ? (
           <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-4 text-center mb-4">
@@ -242,7 +323,7 @@ const SnakeLadderGame = () => {
         <div className="flex gap-3">
           <button onClick={() => { if (!hasSubmittedResult) setShowUploadDialog(true); }} disabled={!isPlayer || battle.status !== 'in_progress' || hasSubmittedResult} className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-xl font-bold hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg">I Won</button>
           <button onClick={() => { if (!hasSubmittedResult) setShowLostConfirm(true); }} disabled={!isPlayer || battle.status !== 'in_progress' || hasSubmittedResult} className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-3 rounded-xl font-bold hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg">I Lost</button>
-          <button onClick={() => setShowCancelReasons(true)} disabled={!canCancel || battle.gameRoomCode || hasSubmittedResult} className="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 text-white py-3 rounded-xl font-bold hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg">Cancel</button>
+          <button onClick={() => setShowCancelReasons(true)} disabled={!canCancel} className="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 text-white py-3 rounded-xl font-bold hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg">Cancel</button>
         </div>
       </motion.div>
 
@@ -292,6 +373,82 @@ const SnakeLadderGame = () => {
             <div className="flex gap-3">
               <button onClick={handleSubmitLost} className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-3 rounded-xl font-bold hover:scale-105 transition-all shadow-lg">Yes, I Lost</button>
               <button onClick={() => setShowLostConfirm(false)} className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-xl font-bold hover:scale-105 transition-all shadow-lg">No</button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Cancellation Request Dialog */}
+      {showCancelRequestDialog && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border-2 border-orange-500"
+          >
+            <div className="text-center mb-6">
+              <div className="text-5xl mb-3">⚠️</div>
+              <h2 className="text-2xl font-black text-gray-800 mb-2">
+                Cancellation Request
+              </h2>
+              <p className="text-gray-600">
+                Your opponent wants to cancel this game. Both players will be refunded if you accept.
+              </p>
+            </div>
+
+            <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-4 mb-6">
+              <p className="text-blue-800 text-sm font-semibold">
+                ℹ️ If you accept, both players will get ₹{battle.entryFee} refunded to their wallets.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleRespondToCancellation(true)}
+                className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 rounded-xl font-bold hover:scale-105 transition-all shadow-lg"
+              >
+                ✓ Accept
+              </button>
+              <button
+                onClick={() => handleRespondToCancellation(false)}
+                className="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white py-3 rounded-xl font-bold hover:scale-105 transition-all shadow-lg"
+              >
+                ✕ Reject
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Win Celebration Dialog */}
+      {showWinCelebration && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0, y: 50 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center border-4 border-yellow-400"
+          >
+            <div className="text-6xl mb-4">🏆</div>
+            <h2 className="text-3xl font-black text-gray-800 mb-2">
+              You Won!
+            </h2>
+            <p className="text-gray-600 mb-6 font-semibold">
+              Congratulations! You have won <span className="text-green-600 font-bold text-xl">₹{battle.prizePool.toFixed(1)}</span>
+            </p>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate('/withdrawal')}
+                className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 py-4 rounded-xl font-black text-lg hover:scale-105 transition-all shadow-xl shadow-yellow-500/30"
+              >
+                💸 Withdraw Winnings
+              </button>
+              <button
+                onClick={() => setShowWinCelebration(false)}
+                className="w-full bg-gray-100 text-gray-600 py-3 rounded-xl font-bold hover:bg-gray-200 transition-all"
+              >
+                Close
+              </button>
             </div>
           </motion.div>
         </div>

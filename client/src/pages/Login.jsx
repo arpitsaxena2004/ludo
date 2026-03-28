@@ -29,6 +29,8 @@ const Login = () => {
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [forgotPhone, setForgotPhone] = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
+  const [whatsappLink, setWhatsappLink] = useState('');
+  const [telegramLink, setTelegramLink] = useState('');
 
   // Update referral code if URL changes
   useEffect(() => {
@@ -52,6 +54,28 @@ const Login = () => {
       }
     };
     fetchSignupBonus();
+  }, []);
+
+  // Fetch support links (WhatsApp and Telegram)
+  useEffect(() => {
+    const fetchSupportLinks = async () => {
+      try {
+        const [whatsappRes, telegramRes] = await Promise.all([
+          axios.get(`${import.meta.env.VITE_API_URL}/config/public/whatsappSupportNumber`),
+          axios.get(`${import.meta.env.VITE_API_URL}/config/public/telegramGroup`)
+        ]);
+        
+        if (whatsappRes.data.success) {
+          setWhatsappLink(whatsappRes.data.data.value || '');
+        }
+        if (telegramRes.data.success) {
+          setTelegramLink(telegramRes.data.data.value || '');
+        }
+      } catch (error) {
+        console.error('Failed to fetch support links:', error);
+      }
+    };
+    fetchSupportLinks();
   }, []);
 
   const handleLogin = async (e) => {
@@ -91,14 +115,29 @@ const Login = () => {
       toast.error('Please enter a valid 10-digit phone number');
       return;
     }
+    
+    if (!whatsappLink || whatsappLink.trim() === '') {
+      toast.error('WhatsApp support link not configured. Please contact admin.');
+      return;
+    }
+    
     const message = encodeURIComponent(`Hello Admin,\n\nI want to reset my password.\nMy registered mobile number is: +91${forgotPhone}`);
     
     // Check if link is a direct number or a group link
     let finalLink = whatsappLink;
-    if (whatsappLink.includes('wa.me')) {
+    
+    // If it's just a phone number (starts with +), convert to wa.me format
+    if (whatsappLink.startsWith('+')) {
+      const phoneNumber = whatsappLink.replace(/\D/g, ''); // Remove non-digits
+      finalLink = `https://wa.me/${phoneNumber}?text=${message}`;
+    } else if (whatsappLink.includes('wa.me')) {
       const separator = whatsappLink.includes('?') ? '&' : '?';
       finalLink = `${whatsappLink}${separator}text=${message}`;
+    } else if (whatsappLink.includes('whatsapp.com')) {
+      // Group link format
+      finalLink = whatsappLink;
     }
+    
     window.open(finalLink, '_blank');
     setShowForgotModal(false);
     setForgotPhone('');
@@ -109,6 +148,12 @@ const Login = () => {
       toast.error('Please enter a valid 10-digit phone number');
       return;
     }
+    
+    if (!telegramLink || telegramLink.trim() === '') {
+      toast.error('Telegram support link not configured. Please contact admin.');
+      return;
+    }
+    
     // Telegram does not support pre-filled message via URL directly into groups, 
     // but we standardly just redirect them to the group so they can paste it.
     // However, for standard bots/users: t.me/username?text=Message
@@ -118,6 +163,7 @@ const Login = () => {
     if (telegramLink.includes('t.me') && !telegramLink.includes('joinchat')) {
        finalLink = `${telegramLink}?text=${message}`;
     }
+    
     window.open(finalLink, '_blank');
     setShowForgotModal(false);
     setForgotPhone('');

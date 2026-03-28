@@ -8,7 +8,7 @@ import AppConfig from '../models/AppConfig.js';
 export const getAvailableGames = async (req, res) => {
   try {
     const { gameType } = req.query;
-    const filter = { status: { $in: ['waiting', 'accepted', 'in_progress'] } };
+    const filter = { status: { $in: ['waiting', 'accepted', 'in_progress', 'disputed'] } };
     if (gameType) filter.gameType = gameType;
 
     const games = await Game.find(filter)
@@ -355,6 +355,137 @@ export const cancelGame = async (req, res) => {
   }
 };
 
+// @desc    Request mutual cancellation (after game started)
+// @route   POST /api/game/request-cancel/:roomCode
+// @access  Private
+export const requestCancellation = async (req, res) => {
+  try {
+    const { roomCode } = req.params;
+
+    const game = await Game.findOne({ roomCode: roomCode.toUpperCase() })
+      .populate('players.user', 'username phoneNumber');
+    
+    if (!game) {
+      return res.status(404).json({ message: 'Game not found' });
+    }
+
+    // Check if user is a player in this game
+    const isPlayer = game.players.some(p => p.user._id.toString() === req.user._id.toString());
+    if (!isPlayer) {
+      return res.status(403).json({ message: 'You are not a player in this game' });
+    }
+
+    // Check if game is in progress
+    if (game.status !== 'in_progress' && game.status !== 'accepted') {
+      return res.status(400).json({ message: 'Can only request cancellation for ongoing games' });
+    }
+
+    // Check if already has a pending cancellation request
+    if (game.cancellationRequest && game.cancellationRequest.status === 'pending') {
+      return res.status(400).json({ message: 'A cancellation request is already pending' });
+    }
+
+    // Create cancellation request
+    game.cancellationRequest = {
+      requestedBy: req.user._id,
+      requestedAt: new Date(),
+      status: 'pending'
+    };
+    await game.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Cancellation request sent. Waiting for opponent response.',
+      game
+    });
+  } catch (error) {
+    console.error('Request Cancellation Error:', error);
+    res.status(500).json({ message: 'Failed to request cancellation', error: error.message });
+  }
+};
+
+// @desc    Respond to cancellation request
+// @route   POST /api/game/respond-cancel/:roomCode
+// @access  Private
+export const respondToCancellation = async (req, res) => {
+  try {
+    const { roomCode } = req.params;
+    const { accept } = req.body; // true or false
+
+    const game = await Game.findOne({ roomCode: roomCode.toUpperCase() })
+      .populate('players.user', 'username phoneNumber');
+    
+    if (!game) {
+      return res.status(404).json({ message: 'Game not found' });
+    }
+
+    // Check if user is a player in this game
+    const isPlayer = game.players.some(p => p.user._id.toString() === req.user._id.toString());
+    if (!isPlayer) {
+      return res.status(403).json({ message: 'You are not a player in this game' });
+    }
+
+    // Check if there's a pending cancellation request
+    if (!game.cancellationRequest || game.cancellationRequest.status !== 'pending') {
+      return res.status(400).json({ message: 'No pending cancellation request' });
+    }
+
+    // Check if user is not the one who requested
+    if (game.cancellationRequest.requestedBy.toString() === req.user._id.toString()) {
+      return res.status(400).json({ message: 'You cannot respond to your own cancellation request' });
+    }
+
+    if (accept) {
+      // Both players agreed to cancel - refund both
+      game.cancellationRequest.status = 'accepted';
+      game.cancellationRequest.respondedAt = new Date();
+      game.status = 'cancelled';
+      await game.save();
+
+      // Refund both players
+      const Transaction = (await import('../models/Transaction.js')).default;
+      
+      for (const player of game.players) {
+        const user = await User.findById(player.user._id);
+        user.depositCash += game.entryFee;
+        await user.save();
+
+        await Transaction.create({
+          user: user._id,
+          type: 'refund',
+          amount: game.entryFee,
+          status: 'completed',
+          description: `Mutual cancellation refund for game ${roomCode.toUpperCase()}`,
+          metadata: {
+            gameId: game._id,
+            roomCode: roomCode.toUpperCase()
+          }
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Game cancelled by mutual agreement. Both players refunded.',
+        refundedAmount: game.entryFee
+      });
+    } else {
+      // Cancellation rejected
+      game.cancellationRequest.status = 'rejected';
+      game.cancellationRequest.respondedAt = new Date();
+      await game.save();
+
+      res.status(200).json({
+        success: true,
+        message: 'Cancellation request rejected. Game continues.',
+        game
+      });
+    }
+  } catch (error) {
+    console.error('Respond to Cancellation Error:', error);
+    res.status(500).json({ message: 'Failed to respond to cancellation', error: error.message });
+  }
+};
+
 
 // @desc    Accept battle (creator accepts second player)
 // @route   POST /api/game/accept/:roomCode
@@ -520,13 +651,15 @@ export const submitGameResult = async (req, res) => {
       return res.status(400).json({ message: 'Invalid result. Must be "won" or "lost"' });
     }
 
-    const game = await Game.findOne({ roomCode: roomCode.toUpperCase() });
+    const game = await Game.findOne({ roomCode: roomCode.toUpperCase() })
+      .populate('players.user', 'username phoneNumber');
+    
     if (!game) {
       return res.status(404).json({ message: 'Game not found' });
     }
 
     // Check if user is a player in this game
-    const playerIndex = game.players.findIndex(p => p.user.toString() === req.user._id.toString());
+    const playerIndex = game.players.findIndex(p => p.user._id.toString() === req.user._id.toString());
     if (playerIndex === -1) {
       return res.status(403).json({ message: 'You are not a player in this game' });
     }
@@ -549,15 +682,44 @@ export const submitGameResult = async (req, res) => {
         const player2Result = game.players[1].result;
 
         if (player1Result === 'won' && player2Result === 'won') {
-          // Conflict: Both claim win
+          // Conflict: Both claim win - Admin will decide
           game.status = 'disputed';
+          console.log(`Game ${roomCode} disputed - both players claim win`);
         } else if (player1Result === 'lost' && player2Result === 'lost') {
-          // Conflict: Both claim loss (rare but possible)
+          // Conflict: Both claim loss - Admin will decide
           game.status = 'disputed';
+          console.log(`Game ${roomCode} disputed - both players claim loss`);
         } else {
-          // One won, one lost - Normal completion
+          // One won, one lost - Automatic winner declaration
+          const winnerIndex = player1Result === 'won' ? 0 : 1;
+          const winner = game.players[winnerIndex].user;
+          
           game.status = 'completed';
           game.completedAt = new Date();
+          game.winner = winner._id;
+          
+          // Credit winning amount to winner
+          const winnerUser = await User.findById(winner._id);
+          winnerUser.winningCash += game.prizePool;
+          await winnerUser.save();
+
+          // Create transaction record
+          const Transaction = (await import('../models/Transaction.js')).default;
+          await Transaction.create({
+            user: winner._id,
+            type: 'game_win',
+            amount: game.prizePool,
+            status: 'completed',
+            description: `Won game ${roomCode.toUpperCase()}`,
+            metadata: {
+              gameId: game._id,
+              roomCode: roomCode.toUpperCase(),
+              entryFee: game.entryFee,
+              prizePool: game.prizePool
+            }
+          });
+
+          console.log(`✅ Game ${roomCode} completed automatically - Winner: ${winner.username || winner.phoneNumber}, Prize: ₹${game.prizePool}`);
         }
       }
       
@@ -565,7 +727,8 @@ export const submitGameResult = async (req, res) => {
     }
 
     const populatedGame = await Game.findById(game._id)
-      .populate('players.user', 'username phoneNumber avatar');
+      .populate('players.user', 'username phoneNumber avatar')
+      .populate('winner', 'username phoneNumber');
 
     res.status(200).json({
       success: true,

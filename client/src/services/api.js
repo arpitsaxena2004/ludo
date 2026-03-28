@@ -85,6 +85,8 @@ export const gameAPI = {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
   cancelGame: (roomCode) => api.delete(`/game/cancel/${roomCode}`),
+  requestCancellation: (roomCode) => api.post(`/game/request-cancel/${roomCode}`),
+  respondToCancellation: (roomCode, accept) => api.post(`/game/respond-cancel/${roomCode}`, { accept }),
   acceptBattle: (roomCode) => api.post(`/game/accept/${roomCode}`),
   rejectBattle: (roomCode) => api.post(`/game/reject/${roomCode}`),
   setGameRoomCode: (roomCode, gameRoomCode) => api.post(`/game/set-room-code/${roomCode}`, { gameRoomCode }),

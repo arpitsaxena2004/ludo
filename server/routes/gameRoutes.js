@@ -15,7 +15,9 @@ import {
   acceptBattle,
   rejectBattle,
   setGameRoomCode,
-  submitGameResult
+  submitGameResult,
+  requestCancellation,
+  respondToCancellation
 } from '../controllers/gameController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -64,6 +66,8 @@ router.post('/join/:roomCode', protect, joinGame);
 router.get('/my-games', protect, getMyGames);
 router.post('/upload-screenshot', protect, upload.single('screenshot'), uploadWinScreenshot);
 router.delete('/cancel/:roomCode', protect, cancelGame);
+router.post('/request-cancel/:roomCode', protect, requestCancellation);
+router.post('/respond-cancel/:roomCode', protect, respondToCancellation);
 router.post('/accept/:roomCode', protect, acceptBattle);
 router.post('/reject/:roomCode', protect, rejectBattle);
 router.post('/set-room-code/:roomCode', protect, setGameRoomCode);

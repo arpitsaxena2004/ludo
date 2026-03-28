@@ -28,8 +28,25 @@ export default defineConfig({
           }
         ]
       },
+      workbox: {
+        // Don't cache API requests
+        navigateFallbackDenylist: [/^\/api/],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/.*\.(?:png|jpg|jpeg|svg|gif|webp)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'images-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
+              }
+            }
+          }
+        ]
+      },
       devOptions: {
-        enabled: true
+        enabled: false // Disable PWA in development to avoid workbox warnings
       }
     })
   ],

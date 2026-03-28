@@ -33,7 +33,10 @@ export const getPublicConfig = async (req, res) => {
           commissionRate: 5,
           referralBonus: 50,
           signupBonus: 50,
-          noticeBoard: '⚡ 5% Commission • 3% Referral • 24/7 Withdrawal • WhatsApp Support 📞'
+          noticeBoard: '⚡ 5% Commission • 3% Referral • 24/7 Withdrawal • WhatsApp Support 📞',
+          whatsappSupportNumber: '',
+          telegramGroup: '',
+          whatsappGroup: ''
         };
         return res.json({ success: true, data: { key, value: defaults[key] || '' } });
       }

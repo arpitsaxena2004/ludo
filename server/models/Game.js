@@ -87,6 +87,26 @@ const gameSchema = new mongoose.Schema({
     type: String,
     enum: ['ludo', 'snakeLadder'],
     default: 'ludo'
+  },
+  cancellationRequest: {
+    requestedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    requestedAt: {
+      type: Date,
+      default: null
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'accepted', 'rejected', null],
+      default: null
+    },
+    respondedAt: {
+      type: Date,
+      default: null
+    }
   }
 }, {
   timestamps: true
