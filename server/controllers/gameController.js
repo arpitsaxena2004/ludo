@@ -154,8 +154,50 @@ export const joinGame = async (req, res) => {
 
     await game.save();
 
-    // Create transaction record
+    // Import Transaction model once
     const Transaction = (await import('../models/Transaction.js')).default;
+
+    // Auto-cancel all other waiting battles created by this joiner (Player B)
+    const joinerId = req.user._id;
+    const joinerWaitingBattles = await Game.find({
+      'players.0.user': joinerId,
+      status: 'waiting',
+      _id: { $ne: game._id } // Exclude current game
+    });
+
+    if (joinerWaitingBattles.length > 0) {
+      console.log(`Auto-cancelling ${joinerWaitingBattles.length} battles for joiner ${joinerId}`);
+
+      for (const battle of joinerWaitingBattles) {
+        // Refund entry fee
+        user.depositCash += battle.entryFee;
+        
+        // Create refund transaction
+        await Transaction.create({
+          user: joinerId,
+          type: 'refund',
+          amount: battle.entryFee,
+          status: 'completed',
+          description: `Auto-cancelled battle ${battle.roomCode} (joined another battle)`,
+          metadata: {
+            gameId: battle._id,
+            roomCode: battle.roomCode,
+            reason: 'auto_cancel_joined_another_battle'
+          }
+        });
+
+        // Mark battle as cancelled
+        battle.status = 'cancelled';
+        await battle.save();
+        
+        console.log(`✅ Auto-cancelled battle ${battle.roomCode}, refunded ₹${battle.entryFee}`);
+      }
+
+      await user.save();
+      console.log(`✅ Total refunded to joiner: ₹${joinerWaitingBattles.reduce((sum, b) => sum + b.entryFee, 0)}`);
+    }
+
+    // Create transaction record for current game entry
     await Transaction.create({
       user: user._id,
       type: 'game_entry',
@@ -174,7 +216,8 @@ export const joinGame = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Joined game successfully',
-      game: populatedGame
+      game: populatedGame,
+      autoCancelledBattles: joinerWaitingBattles.length
     });
   } catch (error) {
     console.error('Join Game Error:', error);
@@ -509,9 +552,53 @@ export const acceptBattle = async (req, res) => {
       return res.status(400).json({ message: 'Waiting for second player to join' });
     }
 
-    // Update status to accepted
+    // Update status to accepted and set start time
     game.status = 'accepted';
+    game.startedAt = new Date(); // Start timer from accept time
     await game.save();
+
+    // Auto-cancel all other waiting battles created by this user
+    const creatorId = req.user._id;
+    const otherWaitingBattles = await Game.find({
+      'players.0.user': creatorId,
+      status: 'waiting',
+      _id: { $ne: game._id } // Exclude current game
+    });
+
+    if (otherWaitingBattles.length > 0) {
+      console.log(`Auto-cancelling ${otherWaitingBattles.length} other battles for user ${creatorId}`);
+      
+      const Transaction = (await import('../models/Transaction.js')).default;
+      const user = await User.findById(creatorId);
+
+      for (const battle of otherWaitingBattles) {
+        // Refund entry fee
+        user.depositCash += battle.entryFee;
+        
+        // Create refund transaction
+        await Transaction.create({
+          user: creatorId,
+          type: 'refund',
+          amount: battle.entryFee,
+          status: 'completed',
+          description: `Auto-cancelled battle ${battle.roomCode} (creator joined another battle)`,
+          metadata: {
+            gameId: battle._id,
+            roomCode: battle.roomCode,
+            reason: 'auto_cancel_multiple_battles'
+          }
+        });
+
+        // Mark battle as cancelled
+        battle.status = 'cancelled';
+        await battle.save();
+        
+        console.log(`✅ Auto-cancelled battle ${battle.roomCode}, refunded ₹${battle.entryFee}`);
+      }
+
+      await user.save();
+      console.log(`✅ Total refunded to user: ₹${otherWaitingBattles.reduce((sum, b) => sum + b.entryFee, 0)}`);
+    }
 
     const populatedGame = await Game.findById(game._id)
       .populate('players.user', 'username phoneNumber avatar');
@@ -519,7 +606,8 @@ export const acceptBattle = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Battle accepted',
-      game: populatedGame
+      game: populatedGame,
+      autoCancelledBattles: otherWaitingBattles.length
     });
   } catch (error) {
     console.error('Accept Battle Error:', error);

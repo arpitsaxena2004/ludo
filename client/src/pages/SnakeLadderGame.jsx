@@ -74,7 +74,7 @@ const SnakeLadderGame = () => {
   }, [roomCode]);
 
   useEffect(() => {
-    if (battle?.status === 'in_progress' && battle?.startedAt) {
+    if ((battle?.status === 'in_progress' || battle?.status === 'accepted') && battle?.startedAt) {
       const startTime = new Date(battle.startedAt).getTime();
       const currentTime = new Date().getTime();
       const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);

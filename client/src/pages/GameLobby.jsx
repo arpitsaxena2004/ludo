@@ -44,22 +44,25 @@ const GameLobby = () => {
       const newRunning = games.filter(g => g.status === 'accepted' || g.status === 'in_progress' || g.status === 'disputed');
 
       // Detect if creator's own waiting battle got auto-expired
-      setOpenBattles(prev => {
-        const myPrevBattle = prev.find(b =>
-          b.players?.[0]?.user?._id === user?.id || b.players?.[0]?.user === user?.id
-        );
-        if (myPrevBattle) {
-          const stillExists = newWaiting.some(b => b.roomCode === myPrevBattle.roomCode) ||
-                              newRunning.some(b => b.roomCode === myPrevBattle.roomCode);
-          if (!stillExists) {
+      const myPrevBattle = openBattles.find(b =>
+        b.players?.[0]?.user?._id === user?.id || b.players?.[0]?.user === user?.id
+      );
+      
+      if (myPrevBattle) {
+        const stillExists = newWaiting.some(b => b.roomCode === myPrevBattle.roomCode) ||
+                            newRunning.some(b => b.roomCode === myPrevBattle.roomCode);
+        if (!stillExists) {
+          // Use setTimeout to avoid state update during render
+          setTimeout(() => {
             toast(`⏰ Your battle ${myPrevBattle.roomCode} expired — ₹${myPrevBattle.entryFee} refunded to your wallet!`, {
               icon: '💸',
               duration: 6000,
             });
-          }
+          }, 0);
         }
-        return newWaiting;
-      });
+      }
+      
+      setOpenBattles(newWaiting);
       setRunningBattles(newRunning);
     } catch (error) {
       console.error('Failed to fetch battles:', error);
@@ -110,14 +113,27 @@ const GameLobby = () => {
 
     setLoading(true);
     try {
-      await gameAPI.joinGame(battle.roomCode);
+      const response = await gameAPI.joinGame(battle.roomCode);
       
-      toast.success('Joined battle successfully! Funds deducted.');
-      fetchBattles();
+      console.log('Join response:', response);
       
-      // Navigate to battle room
-      navigate(`/battle/${battle.roomCode}`);
+      if (response.data.success) {
+        toast.success('Joined battle successfully! Funds deducted.');
+        
+        // Show notification if other battles were auto-cancelled
+        if (response.data.autoCancelledBattles > 0) {
+          toast(`${response.data.autoCancelledBattles} of your battle(s) auto-cancelled and refunded`, {
+            duration: 5000,
+            icon: '💰'
+          });
+        }
+        
+        // Navigate immediately without waiting for fetchBattles
+        navigate(`/battle/${battle.roomCode}`);
+      }
     } catch (error) {
+      console.error('Join battle error:', error);
+      console.error('Error response:', error.response);
       toast.error(error.response?.data?.message || 'Failed to join battle');
     } finally {
       setLoading(false);
@@ -469,10 +485,23 @@ const GameLobby = () => {
                           <button
                             onClick={async () => {
                               try {
-                                await gameAPI.acceptBattle(battle.roomCode);
-                                toast.success('Battle accepted!');
-                                navigate(`/battle/${battle.roomCode}`);
+                                const response = await gameAPI.acceptBattle(battle.roomCode);
+                                
+                                if (response.data.success) {
+                                  toast.success('Battle accepted!');
+                                  
+                                  // Show notification if other battles were auto-cancelled
+                                  if (response.data.autoCancelledBattles > 0) {
+                                    toast(`${response.data.autoCancelledBattles} other battle(s) auto-cancelled and refunded`, {
+                                      duration: 5000,
+                                      icon: '💰'
+                                    });
+                                  }
+                                  
+                                  navigate(`/battle/${battle.roomCode}`);
+                                }
                               } catch (error) {
+                                console.error('Accept battle error:', error);
                                 toast.error(error.response?.data?.message || 'Failed to accept');
                               }
                             }}
@@ -497,6 +526,14 @@ const GameLobby = () => {
                             Reject
                           </button>
                         </div>
+                      ) : battle.status === 'accepted' || battle.status === 'in_progress' ? (
+                        // Show View button if battle is already accepted/in progress
+                        <button
+                          onClick={() => navigate(`/battle/${battle.roomCode}`)}
+                          className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:scale-105 transition-all shadow-lg"
+                        >
+                          View
+                        </button>
                       ) : (
                         // Show loading spinner and View button while waiting
                         <div className="flex flex-col items-center gap-2">

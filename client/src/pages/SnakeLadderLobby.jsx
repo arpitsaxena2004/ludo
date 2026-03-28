@@ -87,8 +87,17 @@ const SnakeLadderLobby = () => {
 
     setLoading(true);
     try {
-      await gameAPI.joinGame(battle.roomCode);
+      const response = await gameAPI.joinGame(battle.roomCode);
       toast.success('Joined battle successfully!');
+      
+      // Show notification if other battles were auto-cancelled
+      if (response.data.autoCancelledBattles > 0) {
+        toast(`${response.data.autoCancelledBattles} of your battle(s) auto-cancelled and refunded`, {
+          duration: 5000,
+          icon: '💰'
+        });
+      }
+      
       fetchBattles();
       navigate(`/snake-battle/${battle.roomCode}`);
     } catch (error) {
@@ -318,8 +327,17 @@ const SnakeLadderLobby = () => {
                               <button
                                 onClick={async () => {
                                   try {
-                                    await gameAPI.acceptBattle(battle.roomCode);
+                                    const response = await gameAPI.acceptBattle(battle.roomCode);
                                     toast.success('Battle accepted!');
+                                    
+                                    // Show notification if other battles were auto-cancelled
+                                    if (response.data.autoCancelledBattles > 0) {
+                                      toast(`${response.data.autoCancelledBattles} other battle(s) auto-cancelled and refunded`, {
+                                        duration: 5000,
+                                        icon: '💰'
+                                      });
+                                    }
+                                    
                                     navigate(`/snake-battle/${battle.roomCode}`);
                                   } catch (error) {
                                     toast.error(error.response?.data?.message || 'Failed');
@@ -346,6 +364,14 @@ const SnakeLadderLobby = () => {
                                 Reject
                               </button>
                             </div>
+                          ) : battle.status === 'accepted' || battle.status === 'in_progress' ? (
+                            // Show View button if battle is already accepted/in progress
+                            <button
+                              onClick={() => navigate(`/snake-battle/${battle.roomCode}`)}
+                              className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:scale-105 transition-all shadow-lg"
+                            >
+                              View
+                            </button>
                           ) : (
                             <div className="flex flex-col items-center gap-2">
                               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400"></div>

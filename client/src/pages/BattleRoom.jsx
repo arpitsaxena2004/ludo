@@ -69,7 +69,7 @@ const BattleRoom = () => {
 
   // Timer countdown
   useEffect(() => {
-    if (battle?.status === 'in_progress' && battle?.startedAt) {
+    if ((battle?.status === 'in_progress' || battle?.status === 'accepted') && battle?.startedAt) {
       // Calculate elapsed time since game started
       const startTime = new Date(battle.startedAt).getTime();
       const currentTime = new Date().getTime();
