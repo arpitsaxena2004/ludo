@@ -145,11 +145,16 @@ const BattleRoom = () => {
   };
 
   const handleCancelBattle = async (reason) => {
+    if (!reason || reason.trim() === '') {
+      toast.error('Please select a cancel reason');
+      return;
+    }
+    
     setShowCancelReasons(false);
     
     try {
       const response = await gameAPI.cancelGame(roomCode);
-      toast.success(`Battle cancelled! ₹${response.data.refundedAmount} refunded to your wallet`);
+      toast.success(`Battle cancelled! Reason: ${reason}. ₹${response.data.refundedAmount} refunded to your wallet`);
       navigate('/game-lobby');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to cancel battle');
@@ -208,7 +213,15 @@ const BattleRoom = () => {
   const currentPlayer = battle.players?.find(p => p.user._id === user?.id);
   const hasUploadedScreenshot = currentPlayer?.winScreenshot;
   const isCreator = battle.players?.[0]?.user._id === user?.id;
-  const canCancel = battle.currentPlayers < 2 || battle.status === 'waiting';
+  
+  // Allow cancel if:
+  // 1. Game is in waiting or accepted status (before game starts)
+  // 2. OR if game room code is not set yet (game hasn't started)
+  // 3. AND user hasn't submitted result yet
+  const canCancel = (
+    (battle.status === 'waiting' || battle.status === 'accepted' || !battle.gameRoomCode) && 
+    !hasSubmittedResult
+  );
   
   const player1 = battle.players?.[0];
   const player2 = battle.players?.[1];
@@ -407,7 +420,7 @@ const BattleRoom = () => {
           </button>
           <button
             onClick={() => setShowCancelReasons(true)}
-            disabled={!canCancel || battle.gameRoomCode || hasSubmittedResult}
+            disabled={!canCancel}
             className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-bold hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
           >
             Cancel
@@ -423,46 +436,41 @@ const BattleRoom = () => {
             animate={{ scale: 1, opacity: 1 }}
             className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl"
           >
-            <h2 className="text-2xl font-black text-gray-800 mb-4 text-center">
-              Select Cancel Reason
+            <h2 className="text-2xl font-black text-gray-800 mb-2 text-center">
+              Why do you want to cancel?
             </h2>
+            <p className="text-gray-600 text-sm text-center mb-4">
+              Select a reason to cancel this battle
+            </p>
             
             <div className="grid grid-cols-2 gap-3 mb-4">
               {[
-                'No Room code',
-                'Not Joined',
-                'Not Playing',
-                "Don't want to play",
-                'Opponent Abusing',
-                'Game not started'
-              ].map((reason) => (
+                { label: 'Late Start', icon: '⏰' },
+                { label: 'No Room Code', icon: '🔢' },
+                { label: 'Opponent Not Joined', icon: '👤' },
+                { label: 'Changed My Mind', icon: '🤔' },
+                { label: 'Technical Issue', icon: '⚠️' },
+                { label: 'Wrong Amount', icon: '💰' },
+                { label: 'Opponent Not Playing', icon: '🎮' },
+                { label: 'Other Reason', icon: '📝' }
+              ].map((item) => (
                 <button
-                  key={reason}
-                  onClick={() => handleCancelBattle(reason)}
-                  className="bg-gray-700 text-white py-3 px-4 rounded-xl font-semibold hover:bg-gray-600 transition-all text-sm"
+                  key={item.label}
+                  onClick={() => handleCancelBattle(item.label)}
+                  className="bg-gradient-to-br from-gray-700 to-gray-800 hover:from-red-500 hover:to-red-600 text-white py-3 px-3 rounded-xl font-semibold transition-all text-sm flex flex-col items-center gap-1 shadow-lg"
                 >
-                  {reason}
+                  <span className="text-2xl">{item.icon}</span>
+                  <span className="text-xs leading-tight">{item.label}</span>
                 </button>
               ))}
             </div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowCancelReasons(false)}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-bold hover:scale-105 transition-all shadow-lg"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  setShowCancelReasons(false);
-                  handleCancelBattle('Other');
-                }}
-                className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-3 rounded-xl font-bold hover:scale-105 transition-all shadow-lg"
-              >
-                Submit
-              </button>
-            </div>
+            <button
+              onClick={() => setShowCancelReasons(false)}
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-bold hover:scale-105 transition-all shadow-lg"
+            >
+              Close
+            </button>
           </motion.div>
         </div>
       )}
