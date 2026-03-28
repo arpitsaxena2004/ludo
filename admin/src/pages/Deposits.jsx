@@ -153,6 +153,21 @@ const Deposits = () => {
         <h1 className="text-2xl lg:text-3xl font-bold text-white">Deposit Requests</h1>
       </div>
 
+      {/* Info Banner */}
+      <div className="bg-blue-500/10 border border-blue-500 rounded-xl p-4 mb-6">
+        <div className="flex items-start gap-3">
+          <FaCheckCircle className="text-blue-400 text-xl flex-shrink-0 mt-1" />
+          <div>
+            <p className="text-blue-400 font-semibold mb-1">Manual Approval Available</p>
+            <p className="text-gray-300 text-sm">
+              If a deposit is stuck in "Processing" status due to network issues or payment gateway delays, 
+              you can manually approve it after verifying the payment. Click "View Details" on any deposit 
+              to approve or reject it manually.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500 rounded-xl p-4">
@@ -382,7 +397,7 @@ const Deposits = () => {
               )}
 
               {/* Admin Notes */}
-              {selectedDeposit.status === 'pending' && (
+              {(selectedDeposit.status === 'pending' || selectedDeposit.status === 'processing') && (
                 <div>
                   <label className="block text-gray-400 text-sm mb-2 font-semibold">Admin Notes (Optional)</label>
                   <textarea
@@ -395,7 +410,7 @@ const Deposits = () => {
                 </div>
               )}
 
-              {selectedDeposit.adminNotes && selectedDeposit.status !== 'pending' && (
+              {selectedDeposit.adminNotes && selectedDeposit.status !== 'pending' && selectedDeposit.status !== 'processing' && (
                 <div className="bg-blue-500/10 border border-blue-500 rounded-xl p-4">
                   <p className="text-blue-400 text-sm font-semibold mb-2">Admin Notes:</p>
                   <p className="text-white">{selectedDeposit.adminNotes}</p>
@@ -412,7 +427,7 @@ const Deposits = () => {
             </div>
 
             <div className="sticky bottom-0 bg-gray-800 p-6 border-t border-gray-700 flex gap-3">
-              {selectedDeposit.status === 'pending' ? (
+              {(selectedDeposit.status === 'pending' || selectedDeposit.status === 'processing') ? (
                 <>
                   <button
                     onClick={handleApprove}
@@ -420,7 +435,7 @@ const Deposits = () => {
                     className="flex-1 bg-green-600 text-white py-4 rounded-xl hover:bg-green-700 disabled:opacity-50 font-bold text-lg flex items-center justify-center gap-2 transition-all"
                   >
                     {processing ? <FaSpinner className="animate-spin" /> : <FaCheck />}
-                    {processing ? 'Processing...' : 'Approve'}
+                    {processing ? 'Processing...' : 'Approve & Credit Amount'}
                   </button>
                   <button
                     onClick={handleReject}
