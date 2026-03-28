@@ -331,8 +331,16 @@ const Deposits = () => {
                     <p className="text-green-400 font-bold text-2xl">₹{selectedDeposit.amount}</p>
                   </div>
                   <div>
-                    <p className="text-gray-400 text-sm mb-1">Status</p>
-                    {getStatusBadge(selectedDeposit.status)}
+                    <p className="text-gray-400 text-sm mb-1">Current Status</p>
+                    <div className="flex flex-col gap-1">
+                      {getStatusBadge(selectedDeposit.status)}
+                      <p className="text-xs text-gray-400 mt-1">
+                        {selectedDeposit.status === 'processing' && '⏳ Waiting for confirmation'}
+                        {selectedDeposit.status === 'pending' && '⏳ Awaiting admin approval'}
+                        {selectedDeposit.status === 'approved' && '✅ Already approved'}
+                        {selectedDeposit.status === 'rejected' && '❌ Already rejected'}
+                      </p>
+                    </div>
                   </div>
                   <div>
                     <p className="text-gray-400 text-sm mb-1">Date & Time</p>
@@ -346,6 +354,20 @@ const Deposits = () => {
                   )}
                 </div>
               </div>
+
+              {/* Status Info Message */}
+              {(selectedDeposit.status === 'approved' || selectedDeposit.status === 'rejected') && (
+                <div className={`${selectedDeposit.status === 'approved' ? 'bg-green-500/10 border-green-500' : 'bg-red-500/10 border-red-500'} border rounded-xl p-4`}>
+                  <p className={`${selectedDeposit.status === 'approved' ? 'text-green-400' : 'text-red-400'} font-semibold mb-1`}>
+                    {selectedDeposit.status === 'approved' ? '✅ This deposit has already been approved' : '❌ This deposit has already been rejected'}
+                  </p>
+                  <p className="text-gray-300 text-sm">
+                    {selectedDeposit.status === 'approved' 
+                      ? 'The amount has been credited to the user\'s account. No further action needed.'
+                      : 'This deposit was rejected. The user has been notified.'}
+                  </p>
+                </div>
+              )}
 
               {/* Payment Gateway Info - Only show for gateway deposits */}
               {selectedDeposit.paymentMethod === 'gateway' && (
