@@ -253,11 +253,7 @@ const SnakeLadderLobby = () => {
 
       {/* Open Battles */}
       <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="mb-6">
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 rounded-t-2xl flex items-center gap-3 shadow-xl">
-          <span className="text-3xl">🎯</span>
-          <h3 className="text-xl font-black text-white">Open Battles</h3>
-          <span className="ml-auto bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-white text-sm font-bold">{openBattles.length}</span>
-        </div>
+        
 
         <div className="space-y-3 mt-3">
           {openBattles.length === 0 ? (
@@ -399,12 +395,7 @@ const SnakeLadderLobby = () => {
 
       {/* Running Battles */}
       <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}>
-        <div className="bg-gradient-to-r from-yellow-500 to-orange-500 p-4 rounded-t-2xl flex items-center gap-3 shadow-xl">
-          <span className="text-3xl">🔥</span>
-          <h3 className="text-xl font-black text-white">Running Battles</h3>
-          <span className="ml-auto bg-white/20 px-3 py-1 rounded-full text-white text-sm font-bold">{runningBattles.length}</span>
-        </div>
-
+      
         <div className="space-y-3 mt-3">
           {runningBattles.length === 0 ? (
             <div className="bg-white p-8 rounded-2xl text-center border-2 border-gray-200 shadow-lg">
@@ -413,6 +404,9 @@ const SnakeLadderLobby = () => {
           ) : (
             runningBattles.map((battle, index) => {
               const isMyBattle = battle.players?.some(p => p.user._id === user?.id || p.user === user?.id);
+              const player1Name = battle.players?.[0]?.user?.username || battle.players?.[0]?.user?.phoneNumber || 'Player 1';
+              const player2Name = battle.players?.[1]?.user?.username || battle.players?.[1]?.user?.phoneNumber || 'Player 2';
+              
               return (
                 <motion.div
                   key={battle._id}
@@ -421,6 +415,10 @@ const SnakeLadderLobby = () => {
                   transition={{ delay: index * 0.05 }}
                   className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-5 shadow-xl border-2 border-orange-500/30"
                 >
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-white font-bold text-sm">{player1Name} vs {player2Name}</p>
+                  </div>
+
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <p className="text-gray-400 text-sm mb-1">Entry Fee</p>

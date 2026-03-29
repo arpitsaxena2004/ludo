@@ -95,9 +95,9 @@ const Home = () => {
   const slide = bannerSlides[currentSlide];
 
   return (
-    <div className="min-h-screen bg-[#e8f5d0] pb-24 overflow-x-hidden">
+    <div className="min-h-screen bg-[#e8f5d0] pb-20 overflow-x-hidden">
       {/* Banner Carousel */}
-      <div className="mt-4 mb-4 mx-4 relative overflow-hidden rounded-2xl shadow-lg" style={{ aspectRatio: '2.5/1' }}>
+      <div className="mt-2 mb-2 mx-2 relative overflow-hidden rounded-lg shadow-lg" style={{ aspectRatio: '2.8/1' }}>
         <AnimatePresence initial={false} custom={direction} mode="popLayout">
           <motion.div
             key={currentSlide}
@@ -111,14 +111,14 @@ const Home = () => {
             {slide.type === 'image' ? (
               <img src={slide.src} alt={slide.alt} className="w-full h-full object-cover" />
             ) : (
-              <div className={`w-full h-full bg-gradient-to-r ${slide.bg} flex flex-col justify-center px-5 py-3`}>
-                <h2 className="font-black text-lg leading-tight mb-1" style={{ color: slide.accent }}>
+              <div className={`w-full h-full bg-gradient-to-r ${slide.bg} flex flex-col justify-center px-3 py-1.5`}>
+                <h2 className="font-black text-sm leading-tight mb-0.5" style={{ color: slide.accent }}>
                   {slide.title}
                 </h2>
-                <p className="text-white/70 text-xs mb-2">{slide.subtitle}</p>
+                <p className="text-white/70 text-[9px] mb-1">{slide.subtitle}</p>
                 <ul className="space-y-0.5">
                   {slide.points.map((p, i) => (
-                    <li key={i} className="text-white text-xs font-semibold">{p}</li>
+                    <li key={i} className="text-white text-[9px] font-semibold">{p}</li>
                   ))}
                 </ul>
               </div>
@@ -127,15 +127,15 @@ const Home = () => {
         </AnimatePresence>
 
         {/* Dot indicators */}
-        <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-10">
+        <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-1 z-10">
           {bannerSlides.map((_, i) => (
             <button
               key={i}
               onClick={() => goToSlide(i)}
               className={`rounded-full transition-all duration-300 ${
                 i === currentSlide
-                  ? 'bg-white w-5 h-2'
-                  : 'bg-white/50 w-2 h-2'
+                  ? 'bg-white w-4 h-1.5'
+                  : 'bg-white/50 w-1.5 h-1.5'
               }`}
             />
           ))}
@@ -146,28 +146,28 @@ const Home = () => {
       <motion.div 
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="mx-4 mb-4 bg-gradient-to-r from-green-600 to-green-700 rounded-2xl p-4 shadow-lg"
+        className="mx-2 mb-2 bg-gradient-to-r from-green-600 to-green-700 rounded-lg p-2 shadow-lg"
       >
-        <p className="text-white text-sm font-semibold text-center leading-tight">
+        <p className="text-white text-[10px] font-semibold text-center leading-tight">
           {noticeText}
         </p>
       </motion.div>
 
       {/* Game Cards */}
-      <div className="p-4 grid grid-cols-2 gap-4">
+      <div className="px-2 grid grid-cols-2 gap-2">
         {/* Ludo Card */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
           onClick={() => ludoEnabled && navigate('/game-lobby')}
-          className={`relative bg-gradient-to-br from-orange-400 to-orange-600 rounded-3xl p-6 text-center shadow-lg overflow-hidden transition-all ${ludoEnabled ? 'cursor-pointer hover:scale-105' : 'opacity-60 cursor-not-allowed'}`}
+          className={`relative bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl p-3 text-center shadow-lg overflow-hidden transition-all ${ludoEnabled ? 'cursor-pointer hover:scale-105' : 'opacity-60 cursor-not-allowed'}`}
         >
-          <div className="mb-3">
-            <img src="/logo.png" alt="Ludo" className="w-20 h-20 mx-auto object-contain" />
+          <div className="mb-1.5">
+            <img src="/logo.png" alt="Ludo" className="w-12 h-12 mx-auto object-contain" />
           </div>
-          <h3 className="text-white font-black text-xl mb-0.5">LUDO</h3>
-          <p className="text-white/90 font-bold text-sm">{ludoEnabled ? 'CLASSIC' : '🔒 Maintenance'}</p>
+          <h3 className="text-white font-black text-base mb-0.5">LUDO</h3>
+          <p className="text-white/90 font-bold text-[10px]">{ludoEnabled ? 'CLASSIC' : '🔒 Maintenance'}</p>
         </motion.div>
 
         {/* Snake & Ladder Card */}
@@ -176,13 +176,13 @@ const Home = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.15 }}
           onClick={() => snakeLadderEnabled && navigate('/snake-ladder-lobby')}
-          className={`relative bg-gradient-to-br from-purple-500 to-indigo-700 rounded-3xl p-6 text-center shadow-lg overflow-hidden transition-all ${snakeLadderEnabled ? 'cursor-pointer hover:scale-105' : 'opacity-60 cursor-not-allowed'}`}
+          className={`relative bg-gradient-to-br from-purple-500 to-indigo-700 rounded-xl p-3 text-center shadow-lg overflow-hidden transition-all ${snakeLadderEnabled ? 'cursor-pointer hover:scale-105' : 'opacity-60 cursor-not-allowed'}`}
         >
-          <div className="mb-3">
-            <div className="text-5xl mx-auto">🐍</div>
+          <div className="mb-1.5">
+            <div className="text-3xl mx-auto">🐍</div>
           </div>
-          <h3 className="text-white font-black text-xl mb-0.5">SNAKE</h3>
-          <p className="text-white/90 font-bold text-sm">{snakeLadderEnabled ? '& LADDER' : '🔒 Maintenance'}</p>
+          <h3 className="text-white font-black text-base mb-0.5">SNAKE</h3>
+          <p className="text-white/90 font-bold text-[10px]">{snakeLadderEnabled ? '& LADDER' : '🔒 Maintenance'}</p>
         </motion.div>
       </div>
     </div>

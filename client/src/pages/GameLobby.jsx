@@ -141,7 +141,7 @@ const GameLobby = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24">
+    <div className="min-h-screen bg-[#e8f5d0] p-3 pb-20">
 
       {/* Rules Modal */}
       {showRules && (
@@ -303,9 +303,9 @@ const GameLobby = () => {
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl p-4 mb-4 shadow-xl border-2 border-green-400"
+        className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl p-3 mb-3 shadow-xl border-2 border-green-400"
       >
-        <p className="text-white text-sm font-semibold text-center">
+        <p className="text-white text-xs font-semibold text-center">
           ⚡ {commissionRate}% Commission • 3% Referral • 24/7 Withdrawal • WhatsApp Support 📞
         </p>
       </motion.div>
@@ -315,18 +315,18 @@ const GameLobby = () => {
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.05 }}
-        className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-4 mb-6 shadow-xl border-2 border-purple-400"
+        className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-3 mb-4 shadow-xl border-2 border-purple-400"
       >
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-white/80 text-xs font-semibold mb-1">Your Balance</p>
-            <p className="text-white text-2xl font-black">
+            <p className="text-white/80 text-[10px] font-semibold mb-0.5">Your Balance</p>
+            <p className="text-white text-xl font-black">
               ₹{((user?.depositCash || 0) + (user?.winningCash || 0) + (user?.bonusCash || 0)).toFixed(2)}
             </p>
           </div>
           <button
             onClick={() => navigate('/wallet')}
-            className="bg-white text-purple-600 px-4 py-2 rounded-xl font-bold hover:scale-105 transition-all shadow-lg text-sm"
+            className="bg-white text-purple-600 px-3 py-1.5 rounded-lg font-bold hover:scale-105 transition-all shadow-lg text-xs"
           >
             Add Cash
           </button>
@@ -338,33 +338,33 @@ const GameLobby = () => {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="bg-white rounded-3xl p-6 mb-6 shadow-lg border-2 border-gray-200"
+        className="bg-white rounded-2xl p-4 mb-4 shadow-lg border-2 border-gray-200"
       >
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-black text-gray-800 flex items-center gap-2">
-            <span className="text-3xl">⚔️</span>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-black text-gray-800 flex items-center gap-2">
+            <span className="text-2xl">⚔️</span>
             Create Battle
           </h2>
           <button 
             onClick={() => setShowRules(true)}
-            className="bg-blue-600 text-white px-3 py-1.5 rounded-lg font-bold text-xs sm:text-sm hover:bg-blue-700 transition-all shadow-lg"
+            className="bg-blue-600 text-white px-2.5 py-1 rounded-lg font-bold text-xs hover:bg-blue-700 transition-all shadow-lg"
           >
             Rules
           </button>
         </div>
 
-        <div className="relative mb-4">
+        <div className="relative mb-3">
           <input
             type="number"
             value={entryAmount}
             onChange={(e) => setEntryAmount(e.target.value)}
             placeholder="Enter Amount"
-            className="w-full bg-white border-2 border-gray-300 pl-4 pr-20 sm:pr-24 py-3 rounded-xl text-gray-800 text-base outline-none focus:border-purple-500 transition-all placeholder-gray-500"
+            className="w-full bg-white border-2 border-gray-300 pl-3 pr-16 py-2.5 rounded-lg text-gray-800 text-sm outline-none focus:border-purple-500 transition-all placeholder-gray-500"
           />
           <button
             onClick={handleCreateBattle}
             disabled={loading}
-            className="absolute right-1 top-1/2 -translate-y-1/2 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 sm:px-6 py-2 rounded-lg font-bold text-sm sm:text-base hover:scale-105 transition-all disabled:opacity-50 shadow-lg"
+            className="absolute right-1 top-1/2 -translate-y-1/2 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs hover:scale-105 transition-all disabled:opacity-50 shadow-lg"
           >
             {loading ? '...' : 'SET'}
           </button>
@@ -375,7 +375,7 @@ const GameLobby = () => {
             <button
               key={amount}
               onClick={() => setEntryAmount(amount.toString())}
-              className="bg-gray-200 text-gray-800 py-3 rounded-xl font-bold hover:bg-gray-300 transition-all border border-gray-300"
+              className="bg-gray-200 text-gray-800 py-2 rounded-lg font-bold hover:bg-gray-300 transition-all border border-gray-300 text-sm"
             >
               ₹{amount}
             </button>
@@ -388,21 +388,15 @@ const GameLobby = () => {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="mb-6"
+        className="mb-4"
       >
-        <div className="bg-gradient-to-r from-green-600 to-teal-600 p-4 rounded-t-2xl flex items-center gap-3 shadow-xl">
-          <span className="text-3xl">🎯</span>
-          <h3 className="text-xl font-black text-white">Open Battles</h3>
-          <span className="ml-auto bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-white text-sm font-bold">
-            {openBattles.length}
-          </span>
-        </div>
+       
 
-        <div className="space-y-3 mt-3">
+        <div className="space-y-2 mt-2">
           {openBattles.length === 0 ? (
-            <div className="bg-white p-8 rounded-2xl text-center border-2 border-gray-200 shadow-lg">
-              <p className="text-gray-600 text-lg font-bold">No open battles available</p>
-              <p className="text-gray-500 text-sm mt-2">Create one to start playing!</p>
+            <div className="bg-white p-6 rounded-xl text-center border-2 border-gray-200 shadow-lg">
+              <p className="text-gray-600 text-base font-bold">No open battles available</p>
+              <p className="text-gray-500 text-xs mt-1">Create one to start playing!</p>
             </div>
           ) : (
             // Sort battles to show creator's battles first
@@ -429,13 +423,13 @@ const GameLobby = () => {
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: index * 0.05 }}
-                className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-4 shadow-xl border-2 border-gray-700"
+                className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-3 shadow-xl border-2 border-gray-700"
               >
                 {/* Header with creator name and delete button */}
-                <div className="mb-3 pb-2 border-b border-gray-700 flex items-center justify-between">
+                <div className="mb-2 pb-1.5 border-b border-gray-700 flex items-center justify-between">
                   <div>
-                    <p className="text-gray-400 text-xs">Challenge From</p>
-                    <p className="text-white font-bold text-base">{creatorName}</p>
+                    <p className="text-gray-400 text-[10px]">Challenge From</p>
+                    <p className="text-white font-bold text-sm">{creatorName}</p>
                   </div>
                   {isCreator && (
                     <button
@@ -450,7 +444,7 @@ const GameLobby = () => {
                           }
                         }
                       }}
-                      className="bg-red-500 text-white px-3 py-1 rounded-lg font-bold text-xs hover:bg-red-600 transition-all"
+                      className="bg-red-500 text-white px-2 py-0.5 rounded-md font-bold text-[10px] hover:bg-red-600 transition-all"
                     >
                       Delete
                     </button>
@@ -460,19 +454,19 @@ const GameLobby = () => {
                 <div className="flex items-center justify-between">
                   {/* Entry Fee */}
                   <div>
-                    <p className="text-gray-400 text-xs mb-1">ENTRY FEE</p>
-                    <div className="flex items-center gap-1">
-                      <span className="text-green-400 text-xs">₹</span>
-                      <span className="text-green-400 font-black text-xl">{battle.entryFee}</span>
+                    <p className="text-gray-400 text-[10px] mb-0.5">ENTRY FEE</p>
+                    <div className="flex items-center gap-0.5">
+                      <span className="text-green-400 text-[10px]">₹</span>
+                      <span className="text-green-400 font-black text-base">{battle.entryFee}</span>
                     </div>
                   </div>
 
                   {/* Prize */}
                   <div>
-                    <p className="text-gray-400 text-xs mb-1">PRIZE</p>
-                    <div className="flex items-center gap-1">
-                      <span className="text-green-400 text-xs">₹</span>
-                      <span className="text-green-400 font-black text-xl">{battle.prizePool.toFixed(1)}</span>
+                    <p className="text-gray-400 text-[10px] mb-0.5">PRIZE</p>
+                    <div className="flex items-center gap-0.5">
+                      <span className="text-green-400 text-[10px]">₹</span>
+                      <span className="text-green-400 font-black text-base">{battle.prizePool.toFixed(1)}</span>
                     </div>
                   </div>
 
@@ -570,13 +564,7 @@ const GameLobby = () => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.3 }}
       >
-        <div className="bg-gradient-to-r from-yellow-500 to-orange-500 p-4 rounded-t-2xl flex items-center gap-3 shadow-xl">
-          <span className="text-3xl">🔥</span>
-          <h3 className="text-xl font-black text-white">Running Battles</h3>
-          <span className="ml-auto bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-white text-sm font-bold">
-            {runningBattles.length}
-          </span>
-        </div>
+      
 
         <div className="space-y-3 mt-3">
           {runningBattles.length === 0 ? (
@@ -587,6 +575,8 @@ const GameLobby = () => {
           ) : (
             runningBattles.map((battle, index) => {
               const isMyBattle = battle.players?.some(p => p && p.user && (p.user._id === user?.id || p.user === user?.id));
+              const player1Name = battle.players?.[0]?.user?.username || battle.players?.[0]?.user?.phoneNumber || 'Player 1';
+              const player2Name = battle.players?.[1]?.user?.username || battle.players?.[1]?.user?.phoneNumber || 'Player 2';
               
               return (
               <motion.div
@@ -597,7 +587,7 @@ const GameLobby = () => {
                 className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-5 shadow-xl border-2 border-orange-500/30"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-white font-bold">Playing</p>
+                  <p className="text-white font-bold text-sm">{player1Name} vs {player2Name}</p>
                   
                 </div>
 

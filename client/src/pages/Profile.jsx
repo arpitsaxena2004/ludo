@@ -63,73 +63,73 @@ const Profile = () => {
 
 
   return (
-    <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24">
+    <div className="min-h-screen bg-[#e8f5d0] p-3 pb-24">
       {/* Profile Header */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-2xl p-4 mb-4 text-center shadow-md"
+        className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-xl p-3 mb-3 text-center shadow-md"
       >
-        <div className="relative inline-block mb-2">
+        <div className="relative inline-block mb-1.5">
           <img
             src={user?.avatar && user.avatar.startsWith('/') ? user.avatar : '/avatar1.png'}
             alt="Avatar"
-            className="w-20 h-20 rounded-full border-4 border-white shadow-xl object-cover mx-auto"
+            className="w-16 h-16 rounded-full border-4 border-white shadow-xl object-cover mx-auto"
           />
         </div>
         
-        <div className="flex items-center justify-center gap-2 mb-1">
-          <span className="text-red-500 text-xl">💎</span>
-          <h2 className="text-xl font-black text-white">
+        <div className="flex items-center justify-center gap-1.5 mb-1">
+          <span className="text-red-500 text-lg">💎</span>
+          <h2 className="text-lg font-black text-white">
             {user?.username || 'User'}
           </h2>
         </div>
 
         {/* Display Mobile Number under Username */}
-        <div className="flex items-center justify-center gap-2 mt-1 bg-white/10 rounded-full py-1.5 px-4 w-fit mx-auto border border-white/20 backdrop-blur-sm">
-          <FaPhone className="text-white/80 text-xs" />
-          <span className="text-white/90 text-sm font-semibold tracking-wide">
+        <div className="flex items-center justify-center gap-1.5 mt-1 bg-white/10 rounded-full py-1 px-3 w-fit mx-auto border border-white/20 backdrop-blur-sm">
+          <FaPhone className="text-white/80 text-[10px]" />
+          <span className="text-white/90 text-xs font-semibold tracking-wide">
             +91 {user?.phoneNumber}
           </span>
         </div>
       </motion.div>
 
       {/* Complete Profile Section */}
-      <div className="mb-4">
-        <h3 className="text-gray-800 font-bold text-base mb-3">Complete Profile</h3>
+      <div className="mb-3">
+        <h3 className="text-gray-800 font-bold text-sm mb-2">Complete Profile</h3>
         
         {/* UPI Details */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-xl p-3 mb-2 shadow-md flex items-center gap-3"
+          className="bg-white rounded-lg p-2.5 mb-1.5 shadow-md flex items-center gap-2"
         >
-          <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center flex-shrink-0">
-            <FaQrcode className="text-white text-xl" />
+          <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
+            <FaQrcode className="text-white text-base" />
           </div>
           <div className="flex-1">
-            <p className="text-gray-600 text-xs font-semibold">UPI ID</p>
+            <p className="text-gray-600 text-[10px] font-semibold">UPI ID</p>
             {isEditingUpi ? (
               <input
                 type="text"
                 value={editedUpiId}
                 onChange={(e) => setEditedUpiId(e.target.value)}
                 placeholder="Enter UPI ID (e.g. name@upi)"
-                className="bg-gray-100 border-2 border-purple-300 rounded-lg px-2 py-1 text-gray-800 font-bold text-sm outline-none focus:border-purple-500 w-full"
+                className="bg-gray-100 border-2 border-purple-300 rounded-md px-1.5 py-0.5 text-gray-800 font-bold text-xs outline-none focus:border-purple-500 w-full"
                 autoFocus
               />
             ) : (
-              <p className="text-gray-800 font-bold text-sm truncate">{user?.upiId || 'Not set'}</p>
+              <p className="text-gray-800 font-bold text-xs truncate">{user?.upiId || 'Not set'}</p>
             )}
           </div>
           {isEditingUpi ? (
-            <div className="flex gap-2">
-              <button onClick={() => handleUpdatePaymentDetails('upi')} disabled={loading} className="text-green-500 text-xl hover:scale-110 transition-all"><FaSave /></button>
-              <button onClick={() => { setIsEditingUpi(false); setEditedUpiId(user?.upiId || ''); }} className="text-red-500 text-xl hover:scale-110 transition-all"><FaTimes /></button>
+            <div className="flex gap-1.5">
+              <button onClick={() => handleUpdatePaymentDetails('upi')} disabled={loading} className="text-green-500 text-lg hover:scale-110 transition-all"><FaSave /></button>
+              <button onClick={() => { setIsEditingUpi(false); setEditedUpiId(user?.upiId || ''); }} className="text-red-500 text-lg hover:scale-110 transition-all"><FaTimes /></button>
             </div>
           ) : (
-            <button onClick={() => setIsEditingUpi(true)} className="text-purple-500 text-xl hover:scale-110 transition-all"><FaEdit /></button>
+            <button onClick={() => setIsEditingUpi(true)} className="text-purple-500 text-lg hover:scale-110 transition-all"><FaEdit /></button>
           )}
         </motion.div>
 
@@ -138,37 +138,37 @@ const Profile = () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.25 }}
-          className="bg-white rounded-xl p-3 mb-2 shadow-md"
+          className="bg-white rounded-lg p-2.5 mb-1.5 shadow-md"
         >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center flex-shrink-0">
-              <FaBuilding className="text-white text-xl" />
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FaBuilding className="text-white text-base" />
             </div>
             <div className="flex-1 flex justify-between items-center">
-              <p className="text-gray-600 text-xs font-semibold">Bank Details</p>
+              <p className="text-gray-600 text-[10px] font-semibold">Bank Details</p>
               {isEditingBank ? (
-                <div className="flex gap-2">
-                  <button onClick={() => handleUpdatePaymentDetails('bank')} disabled={loading} className="text-green-500 text-xl hover:scale-110 transition-all"><FaSave /></button>
-                  <button onClick={() => { setIsEditingBank(false); setEditedBankDetails({ accountHolderName: user?.bankDetails?.accountHolderName || '', accountNumber: user?.bankDetails?.accountNumber || '', ifscCode: user?.bankDetails?.ifscCode || '', bankName: user?.bankDetails?.bankName || '' }); }} className="text-red-500 text-xl hover:scale-110 transition-all"><FaTimes /></button>
+                <div className="flex gap-1.5">
+                  <button onClick={() => handleUpdatePaymentDetails('bank')} disabled={loading} className="text-green-500 text-lg hover:scale-110 transition-all"><FaSave /></button>
+                  <button onClick={() => { setIsEditingBank(false); setEditedBankDetails({ accountHolderName: user?.bankDetails?.accountHolderName || '', accountNumber: user?.bankDetails?.accountNumber || '', ifscCode: user?.bankDetails?.ifscCode || '', bankName: user?.bankDetails?.bankName || '' }); }} className="text-red-500 text-lg hover:scale-110 transition-all"><FaTimes /></button>
                 </div>
               ) : (
-                <button onClick={() => setIsEditingBank(true)} className="text-purple-500 text-xl hover:scale-110 transition-all"><FaEdit /></button>
+                <button onClick={() => setIsEditingBank(true)} className="text-purple-500 text-lg hover:scale-110 transition-all"><FaEdit /></button>
               )}
             </div>
           </div>
-          <div className="pl-14">
+          <div className="pl-12">
             {isEditingBank ? (
-              <div className="flex flex-col gap-2">
-                <input type="text" value={editedBankDetails.accountHolderName} onChange={(e) => setEditedBankDetails(prev => ({ ...prev, accountHolderName: e.target.value }))} placeholder="Account Holder Name" className="bg-gray-100 border-2 border-green-300 rounded-lg px-2 py-1 text-gray-800 font-bold text-sm outline-none focus:border-green-500 w-full" />
-                <input type="text" value={editedBankDetails.accountNumber} onChange={(e) => setEditedBankDetails(prev => ({ ...prev, accountNumber: e.target.value }))} placeholder="Account Number" className="bg-gray-100 border-2 border-green-300 rounded-lg px-2 py-1 text-gray-800 font-bold text-sm outline-none focus:border-green-500 w-full" />
-                <input type="text" value={editedBankDetails.ifscCode} onChange={(e) => setEditedBankDetails(prev => ({ ...prev, ifscCode: e.target.value }))} placeholder="IFSC Code" className="bg-gray-100 border-2 border-green-300 rounded-lg px-2 py-1 text-gray-800 font-bold text-sm outline-none focus:border-green-500 w-full uppercase" />
-                <input type="text" value={editedBankDetails.bankName} onChange={(e) => setEditedBankDetails(prev => ({ ...prev, bankName: e.target.value }))} placeholder="Bank Name" className="bg-gray-100 border-2 border-green-300 rounded-lg px-2 py-1 text-gray-800 font-bold text-sm outline-none focus:border-green-500 w-full" />
+              <div className="flex flex-col gap-1.5">
+                <input type="text" value={editedBankDetails.accountHolderName} onChange={(e) => setEditedBankDetails(prev => ({ ...prev, accountHolderName: e.target.value }))} placeholder="Account Holder Name" className="bg-gray-100 border-2 border-green-300 rounded-md px-1.5 py-0.5 text-gray-800 font-bold text-xs outline-none focus:border-green-500 w-full" />
+                <input type="text" value={editedBankDetails.accountNumber} onChange={(e) => setEditedBankDetails(prev => ({ ...prev, accountNumber: e.target.value }))} placeholder="Account Number" className="bg-gray-100 border-2 border-green-300 rounded-md px-1.5 py-0.5 text-gray-800 font-bold text-xs outline-none focus:border-green-500 w-full" />
+                <input type="text" value={editedBankDetails.ifscCode} onChange={(e) => setEditedBankDetails(prev => ({ ...prev, ifscCode: e.target.value }))} placeholder="IFSC Code" className="bg-gray-100 border-2 border-green-300 rounded-md px-1.5 py-0.5 text-gray-800 font-bold text-xs outline-none focus:border-green-500 w-full uppercase" />
+                <input type="text" value={editedBankDetails.bankName} onChange={(e) => setEditedBankDetails(prev => ({ ...prev, bankName: e.target.value }))} placeholder="Bank Name" className="bg-gray-100 border-2 border-green-300 rounded-md px-1.5 py-0.5 text-gray-800 font-bold text-xs outline-none focus:border-green-500 w-full" />
               </div>
             ) : (
-              <div className="flex flex-col gap-1 text-gray-800 font-bold text-sm">
+              <div className="flex flex-col gap-0.5 text-gray-800 font-bold text-xs">
                 <p>{user?.bankDetails?.accountHolderName || 'Name not set'}</p>
                 <p className="text-gray-500">{user?.bankDetails?.accountNumber ? `A/C: ${user?.bankDetails?.accountNumber}` : 'Account not set'}</p>
-                <p className="text-gray-500 text-xs">{user?.bankDetails?.ifscCode || ''} {user?.bankDetails?.bankName ? `| ${user?.bankDetails?.bankName}` : ''}</p>
+                <p className="text-gray-500 text-[10px]">{user?.bankDetails?.ifscCode || ''} {user?.bankDetails?.bankName ? `| ${user?.bankDetails?.bankName}` : ''}</p>
               </div>
             )}
           </div>

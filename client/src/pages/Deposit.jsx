@@ -90,21 +90,21 @@ const Deposit = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24">
+    <div className="min-h-screen bg-[#e8f5d0] p-3 pb-20">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <span className="text-4xl">💰</span>
-            <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-500">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">💰</span>
+            <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-500">
               Add Money
             </h1>
           </div>
           <button
             onClick={() => navigate('/payment-history')}
-            className="bg-blue-500 backdrop-blur-sm border border-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-600 transition-all flex items-center gap-2 shadow-lg"
+            className="bg-blue-500 backdrop-blur-sm border border-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-600 transition-all flex items-center gap-1.5 shadow-lg text-sm"
           >
-            <FaHistory /> History
+            <FaHistory className="text-sm" /> History
           </button>
         </div>
 
@@ -112,9 +112,9 @@ const Deposit = () => {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-red-500/20 border-2 border-red-500 text-red-400 p-4 rounded-2xl mb-6 flex items-center gap-3"
+            className="bg-red-500/20 border-2 border-red-500 text-red-400 p-3 rounded-xl mb-3 flex items-center gap-2 text-sm"
           >
-            <FaInfoCircle className="text-2xl" />
+            <FaInfoCircle className="text-lg" />
             <p className="font-semibold">Deposits are currently disabled. Please try again later.</p>
           </motion.div>
         )}
@@ -123,18 +123,18 @@ const Deposit = () => {
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-3xl p-8 mb-6 border-2 border-blue-400 shadow-2xl"
+          className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl p-4 mb-3 border-2 border-blue-400 shadow-xl"
         >
-          <div className="flex items-center gap-4 mb-3">
-            <div className="bg-white/20 p-4 rounded-2xl">
-              <FaWallet className="text-4xl text-white" />
+          <div className="flex items-center gap-3 mb-2">
+            <div className="bg-white/20 p-2.5 rounded-xl">
+              <FaWallet className="text-2xl text-white" />
             </div>
             <div>
-              <h2 className="text-white/90 text-lg font-semibold">Current Balance</h2>
-              <p className="text-5xl font-black text-white">₹{user?.depositCash || 0}</p>
+              <h2 className="text-white/90 text-sm font-semibold">Current Balance</h2>
+              <p className="text-3xl font-black text-white">₹{user?.depositCash || 0}</p>
             </div>
           </div>
-          <p className="text-white/80 text-sm bg-white/10 rounded-xl p-3 mt-4">
+          <p className="text-white/80 text-xs bg-white/10 rounded-lg p-2">
             💡 Add money instantly via secure payment gateway
           </p>
         </motion.div>
@@ -145,32 +145,32 @@ const Deposit = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
           onSubmit={handleSubmit}
-          className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-3xl p-6 border-2 border-gray-700 space-y-6"
+          className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-2xl p-4 border-2 border-gray-700 space-y-4"
         >
-          <h2 className="text-2xl font-black text-white mb-4">Add Money</h2>
+          <h2 className="text-lg font-black text-white mb-2">Add Money</h2>
 
           <div>
-            <label className="block text-gray-300 text-sm font-semibold mb-3">Amount (₹)</label>
+            <label className="block text-gray-300 text-xs font-semibold mb-2">Amount (₹)</label>
             <input
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder={`Min: ₹${paymentSettings.minDeposit}, Max: ₹${paymentSettings.maxDeposit}`}
-              className="w-full px-5 py-4 bg-gray-700/50 border-2 border-gray-600 rounded-2xl text-white text-lg font-bold focus:outline-none focus:border-green-500 transition-all"
+              className="w-full px-3 py-2.5 bg-gray-700/50 border-2 border-gray-600 rounded-xl text-white text-base font-bold focus:outline-none focus:border-green-500 transition-all"
               required
               min={paymentSettings.minDeposit}
               max={paymentSettings.maxDeposit}
               disabled={loading}
             />
             
-            <div className="grid grid-cols-3 gap-2 mt-3">
+            <div className="grid grid-cols-3 gap-2 mt-2">
               {quickAmounts.map((amt) => (
                 <button
                   key={amt}
                   type="button"
                   onClick={() => setAmount(amt.toString())}
                   disabled={loading}
-                  className="bg-gray-700/50 hover:bg-green-500/30 border border-gray-600 hover:border-green-500 text-white py-2 rounded-xl font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="bg-gray-700/50 hover:bg-green-500/30 border border-gray-600 hover:border-green-500 text-white py-1.5 rounded-lg font-semibold text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   ₹{amt}
                 </button>
@@ -178,12 +178,12 @@ const Deposit = () => {
             </div>
           </div>
 
-          <div className="bg-blue-500/10 border-2 border-blue-500 rounded-2xl p-4">
-            <div className="flex items-start gap-3">
-              <FaCheckCircle className="text-blue-400 text-xl mt-1 flex-shrink-0" />
+          <div className="bg-blue-500/10 border-2 border-blue-500 rounded-xl p-3">
+            <div className="flex items-start gap-2">
+              <FaCheckCircle className="text-blue-400 text-base mt-0.5 flex-shrink-0" />
               <div>
-                <h3 className="text-blue-400 font-bold mb-2">Instant & Secure Payment</h3>
-                <ul className="text-gray-300 text-sm space-y-1">
+                <h3 className="text-blue-400 font-bold text-sm mb-1">Instant & Secure Payment</h3>
+                <ul className="text-gray-300 text-xs space-y-0.5">
                   <li>✓ Instant credit after successful payment</li>
                   <li>✓ 100% secure payment gateway</li>
                   <li>✓ Multiple payment options (UPI, Cards, Net Banking)</li>
@@ -196,7 +196,7 @@ const Deposit = () => {
           <button
             type="submit"
             disabled={loading || !paymentSettings.isDepositEnabled}
-            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-5 rounded-2xl font-black text-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl transition-all transform hover:scale-105"
+            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl font-black text-base hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl transition-all transform hover:scale-105"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
