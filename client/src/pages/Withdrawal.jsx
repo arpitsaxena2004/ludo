@@ -193,7 +193,7 @@ const Withdrawal = () => {
             </div>
             <div>
               <h2 className="text-white/90 text-sm font-semibold">Available Winning Balance</h2>
-              <p className="text-3xl font-black text-white">₹{user?.winningCash || 0}</p>
+              <p className="text-3xl font-black text-white">₹{(user?.winningCash || 0).toFixed(2)}</p>
             </div>
           </div>
           <p className="text-white/80 text-xs bg-white/10 rounded-lg p-2">
